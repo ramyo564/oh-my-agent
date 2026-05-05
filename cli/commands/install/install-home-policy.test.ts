@@ -60,6 +60,7 @@ const skillsState = vi.hoisted(() => ({
   installShared: vi.fn(),
   installWorkflows: vi.fn(),
   installCodexWorkflowSkills: vi.fn(),
+  installCopilotWorkflowPrompts: vi.fn(),
   installRules: vi.fn(),
   installConfigs: vi.fn(),
   installSkill: vi.fn(),
@@ -133,11 +134,18 @@ import { install } from "../install/install.js";
 
 describe("install home policy", () => {
   const originalHome = process.env.HOME;
+  const originalCi = process.env.CI;
+  const originalOmaYes = process.env.OMA_YES;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     process.env.HOME = "/tmp/test-home";
+    // Force interactive mode regardless of host env (GitHub Actions sets
+    // CI=true, which would otherwise activate non-interactive yes-mode and
+    // bypass the multiselect mocks below).
+    delete process.env.CI;
+    delete process.env.OMA_YES;
 
     // 3 select prompts: language, modelPreset, projectType
     promptState.select
@@ -160,6 +168,10 @@ describe("install home policy", () => {
 
   afterEach(() => {
     process.env.HOME = originalHome;
+    if (originalCi === undefined) delete process.env.CI;
+    else process.env.CI = originalCi;
+    if (originalOmaYes === undefined) delete process.env.OMA_YES;
+    else process.env.OMA_YES = originalOmaYes;
     vi.restoreAllMocks();
   });
 
