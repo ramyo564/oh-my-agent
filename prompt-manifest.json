@@ -1,7 +1,7 @@
 {
   "name": "oh-my-agent",
-  "version": "6.16.2",
-  "releaseDate": "2026-05-08T03:04:30.229Z",
+  "version": "6.17.0",
+  "releaseDate": "2026-05-08T03:06:30.068Z",
   "repository": "https://github.com/first-fluke/oh-my-agent",
   "files": [
     {
@@ -336,7 +336,7 @@
     },
     {
       "path": ".agents/skills/_version.json",
-      "sha256": "bce063129607a7fe7e087453d45ed5170ef577bd3cb21ae8d00ba75ee83e9beb",
+      "sha256": "fb56fd53f40992f1c0a8fe15c2d1dc6fb72833029d62054f76b7b6b8f907a0ae",
       "size": 25
     },
     {
