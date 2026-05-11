@@ -21,6 +21,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
+import { VENDORS } from "./constants.ts";
 import { resolveGitRoot } from "./fs-utils.ts";
 import { makePromptOutput } from "./hook-output.ts";
 import type { ModeState, Vendor } from "./types.ts";
@@ -43,30 +44,55 @@ export function normalizeForMatching(text: string): string {
 // ── CLI Invocation Guard ──────────────────────────────────────
 
 /**
+ * Brands that count as CLI invocations: Oma plus the host LLM CLIs declared
+ * in `VENDORS` (claude, codex, cursor, gemini, qwen). The vendor list is
+ * the single source of truth for hook-supported runtimes; pulling from it
+ * here keeps the brand set in sync when a new vendor is added.
+ *
+ * Third-party harnesses (omc, omx, omo) are intentionally NOT included: they
+ * are separate projects, not host CLIs a user would invoke from an Oma
+ * session. opencode is also not a supported vendor in this codebase.
+ */
+const CLI_INVOCATION_BRANDS = ["oma", ...VENDORS] as const;
+const CLI_INVOCATION_SIGNALS = [
+  "agent",
+  "auto",
+  "exec",
+  "run",
+  "spawn",
+  String.raw`--\S+`,
+  String.raw`\S+:\S+`,
+] as const;
+
+const BRANDS_RE_SOURCE = CLI_INVOCATION_BRANDS.join("|");
+const SIGNALS_RE_SOURCE = CLI_INVOCATION_SIGNALS.join("|");
+
+/**
  * Matches CLI invocations at the start of the prompt.
  *
- * All brand names (oma family and generic vendor CLIs) require an explicit
- * CLI signal after the brand. Brand-only prefixes are NOT treated as CLI
- * invocations because every brand name can appear in natural-language usage:
- * 'claude, review this code', 'oma 프로젝트의 brainstorm', 'codex output
- * looks wrong'. Requiring an explicit signal keeps the symmetry across
- * brands and avoids false-positive skips on conversational prompts that
- * happen to start with a brand reference.
+ * All brand names require an explicit CLI signal after the brand. Brand-only
+ * prefixes are NOT treated as CLI invocations because every brand name can
+ * appear in natural-language usage ('claude, review this code', 'oma
+ * 프로젝트의 brainstorm 알려줘', 'cursor in the editor moves'). Requiring
+ * an explicit signal avoids false-positive skips on conversational prompts.
  *
  * Two accepted invocation shapes:
  *
- *   1. Slash form: '/oma:brainstorm', '/claude:exec' — the leading slash
+ *   1. Slash form: '/oma:brainstorm', '/claude:exec'. The leading slash
  *      plus brand-colon prefix is a definitive CLI marker. Matches
  *      '/<brand>:'.
  *
  *   2. Bare form: '<brand>\s+<signal>' where <signal> is one of the
  *      enumerated subcommand verbs (agent / auto / exec / run / spawn),
  *      a --flag, or a colon-namespaced subcommand ('agent:spawn').
- *      Examples: 'oma agent:spawn brainstorm', 'omc auto', 'claude
- *      --help', 'codex exec --workflow ralph'.
+ *      Examples: 'oma agent:spawn brainstorm', 'claude --help',
+ *      'codex exec --workflow ralph', 'gemini agent', 'cursor agent',
+ *      'qwen run'.
  */
-export const CLI_INVOCATION_AT_START =
-  /^\s*(?:\/(?:oma|omc|omx|omo|claude|codex|opencode):|(?:oma|omc|omx|omo|claude|codex|opencode)\s+(?:agent|auto|exec|run|spawn|--\S+|\S+:\S+))/i;
+export const CLI_INVOCATION_AT_START = new RegExp(
+  `^\\s*(?:\\/(?:${BRANDS_RE_SOURCE}):|(?:${BRANDS_RE_SOURCE})\\s+(?:${SIGNALS_RE_SOURCE}))`,
+  "i",
+);
 
 /**
  * Per-workflow skip predicates. A workflow listed here will be skipped when
@@ -80,9 +106,10 @@ export const KEYWORD_SKIP_PREDICATES: Record<
 > = {};
 
 /**
- * Default predicate: skip ALL workflow triggers when the prompt starts with an
- * oma/claude/codex/opencode CLI invocation. Applies to every workflow unless
- * an explicit per-workflow predicate in KEYWORD_SKIP_PREDICATES overrides it.
+ * Default predicate: skip ALL workflow triggers when the prompt starts with a
+ * CLI invocation of `oma` or one of the host LLM CLIs in `VENDORS`. Applies
+ * to every workflow unless an explicit per-workflow predicate in
+ * KEYWORD_SKIP_PREDICATES overrides it.
  *
  * The regex is applied to the NFKC-lowercased `cleaned` text produced by
  * normalizeForMatching. All brand names are ASCII so NFKC has no effect on
@@ -676,9 +703,9 @@ async function main() {
   for (const [workflow, def] of Object.entries(config.workflows)) {
     if (excluded.has(workflow)) continue;
 
-    // Global CLI-invocation guard: prompts that start with an oma/claude/codex/
-    // opencode CLI brand are tool invocations, not natural-language workflow
-    // requests. Skip silently to avoid false-positive matches on brand names.
+    // Global CLI-invocation guard: prompts that start with a CLI invocation
+    // of `oma` or a `VENDORS` entry are tool invocations, not natural-language
+    // workflow requests. Skip silently to avoid false-positive matches.
     if (shouldSkipAllWorkflows(cleaned)) continue;
 
     // Per-workflow override: if a predicate is registered for this specific

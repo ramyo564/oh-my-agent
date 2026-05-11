@@ -133,8 +133,20 @@ describe("keyword-detector", () => {
       ).toBe(true);
     });
 
-    it("matches: omc auto", () => {
-      expect(CLI_INVOCATION_AT_START.test("omc auto")).toBe(true);
+    it("does NOT match: 'omc auto' (omc is a separate harness, not an Oma host CLI)", () => {
+      expect(CLI_INVOCATION_AT_START.test("omc auto")).toBe(false);
+    });
+
+    it("matches: gemini agent (host LLM CLI)", () => {
+      expect(CLI_INVOCATION_AT_START.test("gemini agent")).toBe(true);
+    });
+
+    it("matches: cursor exec (host LLM CLI)", () => {
+      expect(CLI_INVOCATION_AT_START.test("cursor exec --help")).toBe(true);
+    });
+
+    it("matches: /cursor:agent (slash form)", () => {
+      expect(CLI_INVOCATION_AT_START.test("/cursor:agent")).toBe(true);
     });
 
     it("matches: claude agent test (explicit CLI verb)", () => {
@@ -161,8 +173,8 @@ describe("keyword-detector", () => {
       );
     });
 
-    it("does NOT match: opencode this feature (no CLI verb)", () => {
-      expect(CLI_INVOCATION_AT_START.test("opencode this feature")).toBe(false);
+    it("does NOT match: 'opencode run' (opencode is not an Oma vendor)", () => {
+      expect(CLI_INVOCATION_AT_START.test("opencode run")).toBe(false);
     });
 
     it("matches: codex exec --workflow ralph", () => {
@@ -171,28 +183,32 @@ describe("keyword-detector", () => {
       );
     });
 
-    it("matches: opencode run", () => {
-      expect(CLI_INVOCATION_AT_START.test("opencode run")).toBe(true);
+    it("matches: qwen run (host LLM CLI)", () => {
+      expect(CLI_INVOCATION_AT_START.test("qwen run")).toBe(true);
+    });
+
+    it("matches: /qwen:agent (slash form)", () => {
+      expect(CLI_INVOCATION_AT_START.test("/qwen:agent")).toBe(true);
     });
 
     it("matches: /oma:brainstorm (leading slash form)", () => {
       expect(CLI_INVOCATION_AT_START.test("/oma:brainstorm")).toBe(true);
     });
 
-    it("matches: omx with subcommand", () => {
-      expect(CLI_INVOCATION_AT_START.test("omx spawn")).toBe(true);
+    it("does NOT match: 'omx spawn' (omx is a separate harness, not an Oma vendor)", () => {
+      expect(CLI_INVOCATION_AT_START.test("omx spawn")).toBe(false);
     });
 
-    it("matches: omo run", () => {
-      expect(CLI_INVOCATION_AT_START.test("omo run")).toBe(true);
+    it("does NOT match: 'omo run' (omo is a separate harness, not an Oma vendor)", () => {
+      expect(CLI_INVOCATION_AT_START.test("omo run")).toBe(false);
     });
 
-    // Negative cases — oma-family conversational usage must NOT match
-    it("does NOT match: 'oma is cool' (oma-family natural-language usage)", () => {
+    // Negative cases: conversational usage of brand names must NOT match
+    it("does NOT match: 'oma is cool' (conversational usage of project name)", () => {
       expect(CLI_INVOCATION_AT_START.test("oma is cool")).toBe(false);
     });
 
-    it("does NOT match: 'omx looks great' (oma-family conversational)", () => {
+    it("does NOT match: 'omx looks great' (omx not in vendor list)", () => {
       expect(CLI_INVOCATION_AT_START.test("omx looks great")).toBe(false);
     });
 
@@ -246,8 +262,8 @@ describe("keyword-detector", () => {
       expect(shouldSkipAllWorkflows("codex exec --workflow ralph")).toBe(true);
     });
 
-    it("returns true for opencode CLI invocation", () => {
-      expect(shouldSkipAllWorkflows("opencode run")).toBe(true);
+    it("returns true for qwen CLI invocation", () => {
+      expect(shouldSkipAllWorkflows("qwen run")).toBe(true);
     });
 
     it("returns true for /oma:brainstorm slash form", () => {
