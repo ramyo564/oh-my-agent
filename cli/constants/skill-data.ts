@@ -79,6 +79,10 @@ export const SKILLS: SkillsRegistry = {
       desc: `Multi-vendor AI image generation with authentication-aware parallel dispatch. Routes to Codex (gpt-image-2 via ChatGPT OAuth) and Pollinations (flux/zimage, free with signup). Gemini provider is present but disabled by default (requires billing). Use for image generation, image creation, visual asset generation, and AI art.`,
     },
     {
+      name: "oma-market",
+      desc: `Market research skill for pain-point extraction, trend detection, competitor positioning, and discovery across community sources (Reddit, HN, Bluesky, Mastodon, GitHub Issues, web). Routes via oma-search transport, deterministic CLI compute, intent-auto SWOT/Porter's 5F/PESTEL frameworks. Use for market research, pain point analysis, trend detection, competitor research, user complaints, voice-of-customer, 시장조사, 사용자 페인, 트렌드, 경쟁구도.`,
+    },
+    {
       name: "oma-pdf",
       desc: `Convert PDF files to Markdown using opendataloader-pdf. Extracts text, tables, headings, lists, and images with correct reading order. Use for PDF parsing, PDF to Markdown conversion, document extraction, and AI-ready data preparation.`,
     },

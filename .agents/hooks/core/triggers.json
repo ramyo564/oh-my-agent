@@ -2080,6 +2080,41 @@
         ]
       }
     },
+    "oma-market": {
+      "keywords": {
+        "*": [],
+        "en": [
+          "market research",
+          "pain point",
+          "pain points",
+          "voice of customer",
+          "competitor research",
+          "competitor analysis",
+          "trend detection",
+          "user complaints",
+          "discovery research",
+          "market signal"
+        ],
+        "ko": [
+          "시장조사",
+          "시장 조사",
+          "사용자 페인",
+          "페인 포인트",
+          "트렌드 분석",
+          "경쟁구도",
+          "경쟁사 분석",
+          "사용자 불만",
+          "경쟁 분석"
+        ],
+        "ja": [
+          "市場調査",
+          "ペインポイント",
+          "ユーザー不満",
+          "競合調査",
+          "トレンド分析"
+        ]
+      }
+    },
     "oma-observability": {
       "keywords": {
         "*": [

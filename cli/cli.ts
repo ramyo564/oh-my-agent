@@ -12,6 +12,7 @@ import {
   registerInstall,
 } from "./commands/install/command.js";
 import { registerLink } from "./commands/link/command.js";
+import { registerMarketCommand } from "./commands/market/index.js";
 import { registerMemory } from "./commands/memory/command.js";
 import { registerModelCommands } from "./commands/model/command.js";
 import { registerRecap } from "./commands/recap/command.js";
@@ -79,6 +80,7 @@ program
 registerAuthStatus(program);
 registerUpdate(program);
 registerLink(program);
+registerMarketCommand(program);
 registerDoctor(program);
 registerStats(program);
 registerRetro(program);
