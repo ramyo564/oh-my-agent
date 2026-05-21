@@ -1,4 +1,4 @@
-import { existsSync, globSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 
@@ -104,18 +104,70 @@ function loadSkillBody(workspace: string, agentType: string): string | null {
   }
 }
 
-function artifactExists(workspace: string, pattern: string): boolean {
-  // Node's globSync silently skips dot-prefixed path segments (e.g. `.agents/`)
-  // when matching, even with `cwd`. Resolve to absolute first.
-  const absolutePattern = isAbsolute(pattern)
-    ? pattern
-    : join(workspace, pattern);
+function segmentToRegex(segment: string): RegExp {
+  let body = "";
+  for (const ch of segment) {
+    if (ch === "*") body += "[^/]*";
+    else if (ch === "?") body += "[^/]";
+    else body += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+  }
+  return new RegExp(`^${body}$`);
+}
+
+function hasMatch(currentDir: string, segments: string[]): boolean {
+  if (segments.length === 0) return existsSync(currentDir);
+  const [head, ...rest] = segments;
+  if (head === undefined) return existsSync(currentDir);
+
+  if (head === "**") {
+    if (rest.length === 0) return existsSync(currentDir);
+    if (hasMatch(currentDir, rest)) return true;
+    let entries: string[];
+    try {
+      entries = readdirSync(currentDir);
+    } catch {
+      return false;
+    }
+    for (const entry of entries) {
+      const next = join(currentDir, entry);
+      let isDir = false;
+      try {
+        isDir = statSync(next).isDirectory();
+      } catch {
+        continue;
+      }
+      if (isDir && hasMatch(next, segments)) return true;
+    }
+    return false;
+  }
+
+  if (!head.includes("*") && !head.includes("?")) {
+    return hasMatch(join(currentDir, head), rest);
+  }
+
+  let entries: string[];
   try {
-    const matches = globSync(absolutePattern);
-    return matches.length > 0;
+    entries = readdirSync(currentDir);
   } catch {
     return false;
   }
+  const regex = segmentToRegex(head);
+  for (const entry of entries) {
+    if (regex.test(entry) && hasMatch(join(currentDir, entry), rest)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function artifactExists(workspace: string, pattern: string): boolean {
+  const absolutePattern = isAbsolute(pattern)
+    ? pattern
+    : join(workspace, pattern);
+  const normalized = absolutePattern.replace(/\\/g, "/");
+  const root = normalized.startsWith("/") ? "/" : "";
+  const segments = normalized.split("/").filter((s) => s.length > 0);
+  return hasMatch(root || ".", segments);
 }
 
 export function checkClosure(
