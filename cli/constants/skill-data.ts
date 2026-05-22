@@ -88,7 +88,7 @@ export const SKILLS: SkillsRegistry = {
     },
     {
       name: "oma-recap",
-      desc: `Analyze conversation histories from multiple AI tools (Claude, Codex, Gemini, Qwen, Cursor) and generate themed daily/period work summaries. Filter by date or time window.`,
+      desc: `Analyze conversation histories from multiple AI tools (Claude, Codex, Qwen, Cursor) and generate themed daily/period work summaries. Filter by date or time window.`,
     },
     {
       name: "oma-scholar",

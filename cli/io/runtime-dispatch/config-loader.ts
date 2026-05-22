@@ -40,7 +40,7 @@ function assertNotLegacyPreset(modelPreset: string, filePath: string): void {
     throw new ConfigError(
       `Legacy preset name "${modelPreset}" is no longer valid in ${filePath}.\n` +
         `  Rename it to "${canonical}" — or run \`oma update\` for automatic migration.\n` +
-        `  Built-in presets: antigravity | claude | codex | gemini | qwen | cursor | mixed`,
+        `  Built-in presets: antigravity | claude | codex | qwen | cursor | mixed`,
     );
   }
 }

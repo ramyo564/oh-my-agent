@@ -48,7 +48,14 @@ describe("parseOmaConfig — minimal valid config", () => {
   });
 
   it("accepts all 6 built-in preset keys", () => {
-    const presets = ["claude", "codex", "gemini", "qwen", "cursor", "mixed"];
+    const presets = [
+      "antigravity",
+      "claude",
+      "codex",
+      "qwen",
+      "cursor",
+      "mixed",
+    ];
     for (const preset of presets) {
       const result = parseOmaConfig(`language: en\nmodel_preset: ${preset}\n`);
       expect(result, `preset=${preset} should parse`).not.toBeNull();

@@ -15,7 +15,7 @@ export function registerRecap(program: Command): void {
       .option("--date <date>", "Specific date (YYYY-MM-DD)")
       .option(
         "--tool <tools>",
-        "Filter by tools (comma-separated: claude,codex,gemini,qwen,cursor)",
+        "Filter by tools (comma-separated: claude,codex,qwen,cursor)",
       )
       .option("--top <n>", "Show top N projects/topics", Number.parseInt)
       .option("--sort <metric>", "Sort by: count, duration", "count")
