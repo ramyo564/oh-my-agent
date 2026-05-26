@@ -235,7 +235,8 @@ interface PuppeteerPage {
   screenshot(opts: {
     type?: "png";
     clip?: { x: number; y: number; width: number; height: number };
-  }): Promise<Buffer>;
+    encoding?: "base64";
+  }): Promise<string>;
   close(): Promise<void>;
 }
 
@@ -355,12 +356,17 @@ export async function captureAnnotatedScreenshot(
       document.body.appendChild(div);
     })()`);
 
-    const buf = await page.screenshot({
+    // Use puppeteer's native base64 encoding. Do NOT take the default
+    // Uint8Array result and call .toString("base64") on it — a Uint8Array's
+    // toString ignores the arg and yields a comma-separated DECIMAL list
+    // ("137,80,78,71,…"), producing a corrupt dataUrl (matches pptx.ts).
+    const base64 = await page.screenshot({
       type: "png",
       clip: { x: 0, y: 0, width: FRAME_W, height: FRAME_H },
+      encoding: "base64",
     });
 
-    return `data:image/png;base64,${buf.toString("base64")}`;
+    return `data:image/png;base64,${base64}`;
   } finally {
     await page.close().catch(() => {});
     await browser.close().catch(() => {});
