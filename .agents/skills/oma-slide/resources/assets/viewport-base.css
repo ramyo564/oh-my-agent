@@ -248,6 +248,12 @@
     break-after: page;
   }
 
+  /* No trailing blank page: the last slide must not force a page break. */
+  .slide:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
   .slide.active,
   .slide.visible {
     z-index: auto;
