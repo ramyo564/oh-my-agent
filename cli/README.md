@@ -225,7 +225,7 @@ Set `model_preset` in `.agents/oma-config.yaml` to choose which AI models each a
 
 ```yaml
 language: en
-model_preset: mixed   # antigravity | claude | codex | qwen | cursor | mixed
+model_preset: mixed   # antigravity | claude | codex | cursor | grok | mixed | qwen
 
 # Optional per-agent overrides
 agents:
