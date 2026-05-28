@@ -15,7 +15,13 @@ import type {
   MemoryProvider,
   MemoryProviderStatus,
 } from "../../types/memory.js";
-import { drainMemoryRetryQueue, getAgentMemoryStatus } from "./memory.js";
+import {
+  controlAgentMemoryDaemon,
+  drainMemoryRetryQueue,
+  getAgentMemoryStatus,
+  installAgentMemoryService,
+  setupAgentMemory,
+} from "./memory.js";
 
 function providerStub(args: {
   status?: MemoryProviderStatus;
@@ -90,6 +96,105 @@ describe("memory commands", () => {
       retained: 0,
       invalid: 0,
       dryRun: false,
+    });
+  });
+
+  it("sets up AgentMemory endpoint config when a port is provided", async () => {
+    const result = await setupAgentMemory({
+      homeDir: projectDir,
+      env: { OMA_NO_AGENTMEMORY: "1" },
+      port: 3222,
+    });
+
+    expect(result).toMatchObject({
+      homeDir: projectDir,
+      endpoint: "http://127.0.0.1:3222",
+      endpointConfigured: true,
+      wroteEndpoint: true,
+      installRequested: false,
+      startRequested: false,
+    });
+    expect(
+      JSON.parse(readFileSync(result.endpointPath, "utf-8")),
+    ).toMatchObject({
+      port: 3222,
+      source: "oma",
+    });
+  });
+
+  it("installs AgentMemory only when setup install is requested", async () => {
+    let installCount = 0;
+    const result = await setupAgentMemory({
+      homeDir: projectDir,
+      env: { OMA_NO_AGENTMEMORY: "1" },
+      dryRun: false,
+      install: true,
+      async installer() {
+        installCount += 1;
+        return { status: 0 };
+      },
+    });
+
+    expect(installCount).toBe(1);
+    expect(result).toMatchObject({
+      installRequested: true,
+      installExitCode: 0,
+      startRequested: false,
+    });
+  });
+
+  it("skips install command in setup dry-run mode", async () => {
+    let installCount = 0;
+    const result = await setupAgentMemory({
+      homeDir: projectDir,
+      env: { OMA_NO_AGENTMEMORY: "1" },
+      dryRun: true,
+      install: true,
+      async installer() {
+        installCount += 1;
+        return { status: 0 };
+      },
+    });
+
+    expect(installCount).toBe(0);
+    expect(result).toMatchObject({
+      installRequested: true,
+      installSkipped: true,
+      dryRun: true,
+    });
+  });
+
+  it("previews AgentMemory daemon start without writing endpoint or pid files", async () => {
+    const result = await controlAgentMemoryDaemon({
+      action: "start",
+      homeDir: projectDir,
+      env: {},
+      port: 3333,
+      dryRun: true,
+    });
+
+    expect(result).toMatchObject({
+      action: "start",
+      dryRun: true,
+      ownedProcessRunning: false,
+      endpoint: null,
+    });
+    expect(result.message).toContain("3333");
+    expect(existsSync(result.pidPath)).toBe(false);
+  });
+
+  it("returns deferred service install surface for supported platforms", () => {
+    expect(
+      installAgentMemoryService({
+        homeDir: projectDir,
+        platform: "darwin",
+        dryRun: true,
+      }),
+    ).toMatchObject({
+      action: "install",
+      platform: "darwin",
+      supported: true,
+      dryRun: true,
     });
   });
 

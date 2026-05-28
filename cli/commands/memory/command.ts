@@ -6,6 +6,9 @@ import {
 } from "../../utils/cli-framework.js";
 import {
   initMemory,
+  printAgentMemoryDaemon,
+  printAgentMemoryServiceInstall,
+  printAgentMemorySetup,
   printAgentMemoryStatus,
   printMemoryRetryDrain,
 } from "./memory.js";
@@ -20,6 +23,118 @@ export function registerMemory(program: Command): void {
     runAction(
       async (options) => {
         await initMemory(resolveJsonMode(options), options.force);
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  addOutputOptions(
+    program
+      .command("memory:setup")
+      .description("Prepare AgentMemory endpoint configuration")
+      .option("--endpoint <url>", "Write an explicit AgentMemory endpoint URL")
+      .option("--port <port>", "Write a loopback AgentMemory port")
+      .option("--install", "Install @agentmemory/agentmemory globally")
+      .option("--start", "Start AgentMemory after setup")
+      .option("--dry-run", "Preview setup without writing files"),
+  ).action(
+    runAction(
+      async (options) => {
+        await printAgentMemorySetup(resolveJsonMode(options), {
+          endpoint: options.endpoint,
+          port: options.port,
+          install: options.install,
+          start: options.start,
+          dryRun: options.dryRun,
+        });
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  const daemon = program
+    .command("memory:daemon")
+    .description("Manage an OMA-owned AgentMemory daemon process");
+
+  addOutputOptions(
+    daemon.command("status").description("Show daemon status"),
+  ).action(
+    runAction(
+      async (options) => {
+        await printAgentMemoryDaemon("status", resolveJsonMode(options));
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  addOutputOptions(
+    daemon
+      .command("start")
+      .description("Start AgentMemory in the background")
+      .option("--port <port>", "Loopback REST port", "3111")
+      .option("--dry-run", "Preview the daemon command without starting it"),
+  ).action(
+    runAction(
+      async (options) => {
+        await printAgentMemoryDaemon("start", resolveJsonMode(options), {
+          port: options.port,
+          dryRun: options.dryRun,
+        });
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  addOutputOptions(
+    daemon
+      .command("stop")
+      .description("Stop the OMA-owned AgentMemory daemon")
+      .option("--dry-run", "Preview stop without signaling a process"),
+  ).action(
+    runAction(
+      async (options) => {
+        await printAgentMemoryDaemon("stop", resolveJsonMode(options), {
+          dryRun: options.dryRun,
+        });
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  addOutputOptions(
+    daemon
+      .command("restart")
+      .description("Restart the OMA-owned AgentMemory daemon")
+      .option("--port <port>", "Loopback REST port", "3111")
+      .option("--dry-run", "Preview restart without signaling a process"),
+  ).action(
+    runAction(
+      async (options) => {
+        await printAgentMemoryDaemon("restart", resolveJsonMode(options), {
+          port: options.port,
+          dryRun: options.dryRun,
+        });
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  const service = program
+    .command("memory:service")
+    .description("Manage AgentMemory OS service integration");
+
+  addOutputOptions(
+    service
+      .command("install")
+      .description("Install AgentMemory launchd/systemd service integration")
+      .option("--dry-run", "Preview service install without writing files"),
+  ).action(
+    runAction(
+      async (options) => {
+        printAgentMemoryServiceInstall(
+          resolveJsonMode(options),
+          options.dryRun,
+        );
       },
       { supportsJsonOutput: true },
     ),
