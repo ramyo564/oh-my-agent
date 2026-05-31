@@ -1,7 +1,7 @@
 {
   "name": "oh-my-agent",
   "version": "8.20.2",
-  "releaseDate": "2026-05-31T10:26:01.141Z",
+  "releaseDate": "2026-05-31T12:53:47.092Z",
   "repository": "https://github.com/first-fluke/oh-my-agent",
   "files": [
     {
@@ -1591,8 +1591,8 @@
     },
     {
       "path": ".agents/skills/oma-slide/resources/assets/viewport-base.css",
-      "sha256": "9f5938d66b897a2f89a3a6817e196c336c36007258a15fce7ad61b1858ac35ce",
-      "size": 8039
+      "sha256": "dfc41c953a9726beac65535cfd3cc37761042c0f11873d4726e9acfd6ea8c3f5",
+      "size": 8775
     },
     {
       "path": ".agents/skills/oma-slide/resources/canva-integration.md",
