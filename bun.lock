@@ -13,7 +13,7 @@
     },
     "cli": {
       "name": "oh-my-agent",
-      "version": "8.9.0",
+      "version": "8.22.0",
       "bin": {
         "oh-my-agent": "./bin/cli.js",
         "oma": "./bin/cli.js",
@@ -58,13 +58,14 @@
     },
     "web": {
       "name": "web",
-      "version": "3.6.0",
+      "version": "3.7.1",
       "dependencies": {
         "@docusaurus/core": "3.10.1",
         "@docusaurus/faster": "3.10.1",
         "@docusaurus/plugin-pwa": "3.10.1",
         "@docusaurus/preset-classic": "3.10.1",
         "@easyops-cn/docusaurus-search-local": "0.55.1",
+        "@gracefullight/docusaurus-plugin-copy-markdown": "^0.3.0",
         "@mdx-js/react": "^3.0.0",
         "clsx": "^2.1.1",
         "prism-react-renderer": "^2.3.0",
@@ -566,6 +567,8 @@
     "@emnapi/runtime": ["@emnapi/runtime@1.10.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-ewvYlk86xUoGI0zQRNq/mC+16R1QeDlKQy21Ki3oSYXNgLb45GV1P6A0M+/s6nyCuNDqe5VpaY84BzXGwVbwFA=="],
 
     "@emnapi/wasi-threads": ["@emnapi/wasi-threads@1.2.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w=="],
+
+    "@gracefullight/docusaurus-plugin-copy-markdown": ["@gracefullight/docusaurus-plugin-copy-markdown@0.3.0", "", { "dependencies": { "@docusaurus/utils": "^3", "@docusaurus/utils-validation": "^3", "gray-matter": "^4.0.3" } }, "sha512-Qo1IYQv/LGgrCjb6OMMS7hN41XiPZgSoiIjNJXAkLDtCRbq0Sf4QfVxykWJdZJRCf0pjr0q2wfyryblTOB+LDg=="],
 
     "@hapi/hoek": ["@hapi/hoek@9.3.0", "", {}, "sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ=="],
 

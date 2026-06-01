@@ -72,6 +72,12 @@ const config: Config = {
 
   plugins: [
     [
+      "@gracefullight/docusaurus-plugin-copy-markdown",
+      {
+        includeBlog: false,
+      },
+    ],
+    [
       "@docusaurus/plugin-pwa",
       {
         debug: false,
