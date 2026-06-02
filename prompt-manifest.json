@@ -1,7 +1,7 @@
 {
   "name": "oh-my-agent",
   "version": "8.27.0",
-  "releaseDate": "2026-06-02T06:50:08.786Z",
+  "releaseDate": "2026-06-02T07:05:48.494Z",
   "repository": "https://github.com/first-fluke/oh-my-agent",
   "files": [
     {
@@ -391,8 +391,8 @@
     },
     {
       "path": ".agents/skills/_shared/runtime/event-spec.md",
-      "sha256": "acc9d28ea520b4cb4504a149e6664edeff990451387ba7383739c9188751f433",
-      "size": 4891
+      "sha256": "5132df9398ac805fae948ad55561d1bbd926b23ea85ac65e0fa8b12be8cceac5",
+      "size": 4887
     },
     {
       "path": ".agents/skills/_shared/runtime/execution-protocols/antigravity.md",
@@ -1771,18 +1771,18 @@
     },
     {
       "path": ".agents/workflows/architecture.md",
-      "sha256": "38a4b28d217b801def5c3f9aed579f3e1af38785aef8ae93f0592dde9ed3c8b7",
-      "size": 4341
+      "sha256": "4bf070f3c6f3b5cb225ddeb99308806e127a5895468344d667237143abd3ddd3",
+      "size": 4946
     },
     {
       "path": ".agents/workflows/brainstorm.md",
-      "sha256": "1707c76f490286b1d8f1abd92645efcab5bd7cebe56ff51dbfb87c20abe77e36",
-      "size": 5583
+      "sha256": "612b355072800cc4efbeb1a21964c22f3d0fe38708f409e87b833033d306cc75",
+      "size": 6158
     },
     {
       "path": ".agents/workflows/debug.md",
-      "sha256": "2a8774ec84cc847ab15881671707f05362eb69b43b6671cd37bb7a6bf5710837",
-      "size": 3627
+      "sha256": "dfcc1eff63c52be4b70b51fb78a78f04e854f15dd50974616eee38f1b8cc23c2",
+      "size": 4206
     },
     {
       "path": ".agents/workflows/deepinit.md",
@@ -1791,8 +1791,8 @@
     },
     {
       "path": ".agents/workflows/deepsec.md",
-      "sha256": "6f74bc401ebdc82d543aaa442238f0f496a8c534f11b4800973e8dfcb4414c16",
-      "size": 11887
+      "sha256": "93f3c82a1a20634c8b9ff272272547fdf5a5dac7c77fc9e15f5565ae30b0caf5",
+      "size": 12490
     },
     {
       "path": ".agents/workflows/design.md",
@@ -1801,13 +1801,13 @@
     },
     {
       "path": ".agents/workflows/docs.md",
-      "sha256": "150971043ed24e8c2c8e8193cdfd34ac2c59612d3d39e6318f224f55412d9d63",
-      "size": 6959
+      "sha256": "78b4b011c14ee56bc2d35ad8a14223406960c3ecf4360596ec1549403c540261",
+      "size": 7585
     },
     {
       "path": ".agents/workflows/orchestrate.md",
-      "sha256": "8b5d016a07dc6fc197856308a35ffa08f242802856ff591230a438ceb921d879",
-      "size": 9609
+      "sha256": "e6f6bc4492d9ac31e146a32c50faa2b086b9c2de95fe1368c4f9e69cb2e4113c",
+      "size": 9577
     },
     {
       "path": ".agents/workflows/pdf.md",
@@ -1816,8 +1816,8 @@
     },
     {
       "path": ".agents/workflows/plan.md",
-      "sha256": "a86fa264c7c6b53d20f822e763c44451caad2b23a48a81253e7d87773f42b315",
-      "size": 7731
+      "sha256": "43efeebdb9dbb7ce58c3daf13a6aa43f253c46db42379320a3f17a9513fa66c5",
+      "size": 8297
     },
     {
       "path": ".agents/workflows/ralph/resources/judge-protocol.md",
@@ -1836,13 +1836,13 @@
     },
     {
       "path": ".agents/workflows/review.md",
-      "sha256": "fdd1084909145b11e9260aafadef56ecbfb4427e11e10343cc84af3f3131f765",
-      "size": 4801
+      "sha256": "d0ea2492883ecd86e62b82a8bdb519a14fdc713d75209dd2e37d8c4bbe893905",
+      "size": 5443
     },
     {
       "path": ".agents/workflows/scm.md",
-      "sha256": "aa170ad01f7218aa97c0128898be014baf5f7648b4b824b4951abb0bf494ac72",
-      "size": 6727
+      "sha256": "0a8066674e34eb5fce8802b526ad2d77e9c0b61675c2c7732877804477b02fe3",
+      "size": 7328
     },
     {
       "path": ".agents/workflows/stack-set.md",
@@ -1866,13 +1866,13 @@
     },
     {
       "path": ".agents/workflows/ultrawork.md",
-      "sha256": "8761420c53079cba3af736608ac450874ab3fad6bf60aa28eeb601b1077012ef",
-      "size": 20582
+      "sha256": "269c49c616cc98982a1a438ac29bc624b2fcfded73a31a10f66a35e951e1cd45",
+      "size": 20540
     },
     {
       "path": ".agents/workflows/work.md",
-      "sha256": "5dfa4b1eadbd50f1a9c6ea40f93add6bc9c8a08e57f3abbdbb79d696beca23c4",
-      "size": 8163
+      "sha256": "7a20b32f9f57bdf18fd66c9ae8c780caccade06e9f481723b31593eba71e7593",
+      "size": 8141
     }
   ],
   "checksums": {
