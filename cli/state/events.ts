@@ -290,6 +290,16 @@ export function sortEvents(events: OmaEvent[]): OmaEvent[] {
   });
 }
 
+/** Read a string field from an event payload, falling back when missing/blank. */
+export function eventPayloadText(
+  event: OmaEvent,
+  key: string,
+  fallback = "",
+): string {
+  const value = event.payload?.[key];
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
 export function deriveMeta(sid: string, events: OmaEvent[]): SessionMeta {
   const meta: SessionMeta = {
     sid,

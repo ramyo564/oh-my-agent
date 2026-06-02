@@ -5,6 +5,10 @@ import {
   readIndex,
 } from "../../state/events.js";
 import {
+  mirrorSessionToSerena,
+  type SerenaMirrorResult,
+} from "../../state/serena-mirror.js";
+import {
   addOutputOptions,
   resolveJsonMode,
   runAction,
@@ -56,7 +60,11 @@ export function registerEmit(program: Command): void {
       .option("--vendor-sid <vendorSid>", "Runtime/vendor session id")
       .option("--parent-event-id <eventId>", "Parent event id")
       .option("--causality-key <key>", "Causality grouping key")
-      .option("--ts <iso>", "Override event timestamp"),
+      .option("--ts <iso>", "Override event timestamp")
+      .option(
+        "--no-mirror",
+        "Skip the Serena mirror on session.ended (D25/D67)",
+      ),
   ).action(
     runAction(
       async (kind: string, payloadRaw: string | undefined, options) => {
@@ -73,10 +81,27 @@ export function registerEmit(program: Command): void {
           payload: parsePayload(payloadRaw),
         });
 
+        // D25: a terminal session is mirrored to Serena post-completion.
+        // Best-effort; mirror failures are surfaced but never block the emit.
+        let mirror: SerenaMirrorResult | undefined;
+        if (kind === "session.ended" && options.mirror !== false) {
+          mirror = await mirrorSessionToSerena({
+            projectDir: process.cwd(),
+            sid,
+          });
+        }
+
         if (jsonMode) {
-          console.log(JSON.stringify(event, null, 2));
+          console.log(JSON.stringify({ event, mirror }, null, 2));
         } else {
           console.log(`Emitted ${event.kind} ${event.eventId} -> ${sid}`);
+          if (mirror) {
+            console.log(
+              mirror.written
+                ? `Mirrored to ${mirror.memoryName} (${mirror.method})`
+                : `Serena mirror skipped: ${mirror.warning ?? "unknown error"}`,
+            );
+          }
         }
       },
       { supportsJsonOutput: true },

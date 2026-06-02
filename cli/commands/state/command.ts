@@ -9,6 +9,10 @@ import {
   renderSelfHealingGateResult,
 } from "../../state/self-healing.js";
 import {
+  mirrorSessionToSerena,
+  renderSerenaMirrorResult,
+} from "../../state/serena-mirror.js";
+import {
   addOutputOptions,
   resolveJsonMode,
   runAction,
@@ -21,11 +25,13 @@ import {
   purgeStateSessions,
   renderArchivedStateList,
   renderArchiveResult,
+  renderInjectLogView,
   renderPurgeResult,
   renderRepairResult,
   renderSessionView,
   renderStateList,
   repairStateSessions,
+  viewInjectLog,
   viewSession,
 } from "./state.js";
 
@@ -245,6 +251,59 @@ export function registerState(program: Command): void {
               console.log(`    - ${decision.subject}`);
             }
           }
+        }
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  addOutputOptions(
+    program
+      .command("state:inject-log <sid>")
+      .description("List or view per-boundary inject audit logs (D52)")
+      .option("--entry <file>", "Print a specific inject-log entry"),
+  ).action(
+    runAction(
+      async (sid: string, options) => {
+        const view = viewInjectLog(sid, {
+          entry: options.entry as string | undefined,
+        });
+        if (resolveJsonMode(options)) {
+          console.log(JSON.stringify(view, null, 2));
+        } else {
+          console.log(renderInjectLogView(view));
+        }
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  addOutputOptions(
+    program
+      .command("state:mirror [sid]")
+      .description(
+        "Mirror a session summary to .serena/memories (post-completion)",
+      )
+      .option("--category <category>", "Active category lookup", "main"),
+  ).action(
+    runAction(
+      async (sid: string | undefined, options) => {
+        const resolvedSid = resolveDecisionVerifierSid({
+          projectDir: process.cwd(),
+          sid,
+          category: options.category as string | undefined,
+        });
+        const result = await mirrorSessionToSerena({
+          projectDir: process.cwd(),
+          sid: resolvedSid,
+        });
+        if (resolveJsonMode(options)) {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          console.log(renderSerenaMirrorResult(result));
+        }
+        if (!result.written) {
+          process.exitCode = 1;
         }
       },
       { supportsJsonOutput: true },

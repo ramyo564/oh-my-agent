@@ -1,5 +1,6 @@
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -21,15 +22,18 @@ import {
   archiveStateSessions,
   collectArchivedState,
   collectState,
+  listInjectLogs,
   parseOlderThan,
   purgeStateSessions,
   renderArchivedStateList,
   renderArchiveResult,
+  renderInjectLogView,
   renderPurgeResult,
   renderRepairResult,
   renderSessionView,
   renderStateList,
   repairStateSessions,
+  viewInjectLog,
   viewSession,
 } from "./state.js";
 
@@ -419,5 +423,46 @@ describe("state command helpers", () => {
 
     expect(result.unchanged).toBe(true);
     expect(renderRepairResult(result)).toContain("no repairs needed");
+  });
+
+  it("lists and views per-boundary inject logs", () => {
+    const sid = "oma-inject";
+    activateWorkflowSession({ projectDir, sid, workflow: "ultrawork" });
+    const dir = join(sessionDir(projectDir, sid), "inject-log");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      join(dir, "2026-06-02T20-00-00-000Z.md"),
+      "# inject one\nrendered body",
+      "utf-8",
+    );
+    writeFileSync(
+      join(dir, "2026-06-02T21-00-00-000Z.md"),
+      "# inject two",
+      "utf-8",
+    );
+
+    const entries = listInjectLogs(sid, projectDir);
+    expect(entries.map((entry) => entry.file)).toEqual([
+      "2026-06-02T20-00-00-000Z.md",
+      "2026-06-02T21-00-00-000Z.md",
+    ]);
+
+    const list = viewInjectLog(sid, { projectDir });
+    expect(renderInjectLogView(list)).toContain("2026-06-02T20-00-00-000Z.md");
+
+    const single = viewInjectLog(sid, {
+      projectDir,
+      entry: "2026-06-02T20-00-00-000Z",
+    });
+    expect(single.content).toContain("rendered body");
+    expect(renderInjectLogView(single)).toBe("# inject one\nrendered body");
+  });
+
+  it("returns an empty inject-log view for sessions without logs", () => {
+    activateWorkflowSession({ projectDir, sid: "oma-nolog", workflow: "work" });
+    expect(listInjectLogs("oma-nolog", projectDir)).toEqual([]);
+    expect(
+      renderInjectLogView(viewInjectLog("oma-nolog", { projectDir })),
+    ).toContain("(none)");
   });
 });
