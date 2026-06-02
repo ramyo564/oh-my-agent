@@ -1,9 +1,17 @@
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   generateHookShellWrapper,
   HOOK_DEDUP_PREAMBLE,
+  type HookVariant,
+  installHooksFromVariant,
   withDedup,
 } from "./hooks-composer.js";
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 describe("hook self-dedup preamble (EC-6 / T2.1)", () => {
   it("generated hook script begins with the dedup preamble", () => {
@@ -49,5 +57,56 @@ describe("hook self-dedup preamble (EC-6 / T2.1)", () => {
   it("stat fallback covers both macOS (-f %m) and Linux (-c %Y) in the preamble", () => {
     expect(HOOK_DEDUP_PREAMBLE).toContain('stat -f %m "$__oma_dedup_lock"');
     expect(HOOK_DEDUP_PREAMBLE).toContain('stat -c %Y "$__oma_dedup_lock"');
+  });
+});
+
+describe("Codex hook variant contract", () => {
+  it("installs the Codex L1 flush chain, tool filter, stop hook, and hooks feature flag", () => {
+    const targetDir = mkdtempSync(join(tmpdir(), "oma-codex-hooks-"));
+    try {
+      const variant = JSON.parse(
+        readFileSync(
+          join(repoRoot, ".agents", "hooks", "variants", "codex.json"),
+          "utf-8",
+        ),
+      ) as HookVariant;
+
+      installHooksFromVariant(repoRoot, targetDir, variant);
+
+      const hooksJson = JSON.parse(
+        readFileSync(join(targetDir, ".codex", "hooks.json"), "utf-8"),
+      );
+      const promptHooks = hooksJson.hooks.UserPromptSubmit[0].hooks;
+      expect(promptHooks.map((hook: { name: string }) => hook.name)).toEqual([
+        "keyword-detector",
+        "state-boundary",
+        "skill-injector",
+      ]);
+      expect(
+        promptHooks.map((hook: { command: string }) => hook.command),
+      ).toEqual([
+        "bun .codex/hooks/keyword-detector.ts",
+        "bun .codex/hooks/state-boundary.ts",
+        "bun .codex/hooks/skill-injector.ts",
+      ]);
+
+      expect(hooksJson.hooks.PreToolUse[0]).toMatchObject({
+        matcher: "Bash",
+        hooks: [{ name: "test-filter" }],
+      });
+      expect(hooksJson.hooks.Stop[0].hooks[0]).toMatchObject({
+        name: "persistent-mode",
+        command: "bun .codex/hooks/persistent-mode.ts",
+      });
+
+      const codexConfig = readFileSync(
+        join(targetDir, ".codex", "config.toml"),
+        "utf-8",
+      );
+      expect(codexConfig).toContain("[features]");
+      expect(codexConfig).toContain("hooks = true");
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
   });
 });

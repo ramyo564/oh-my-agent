@@ -65,6 +65,31 @@ describe("hook vendor renderer", () => {
     );
   });
 
+  it("renders Codex prompt output only through hookSpecificOutput", () => {
+    const rendered = renderStateSnapshot({
+      vendor: "codex",
+      sid: "oma-codex-test",
+      reason: "vendor/session boundary",
+      recentEvents: [],
+      facts: [],
+    });
+    const parsed = JSON.parse(makePromptOutput("codex", rendered)) as {
+      additionalContext?: string;
+      additional_context?: string;
+      hookSpecificOutput?: {
+        hookEventName?: string;
+        additionalContext?: string;
+      };
+    };
+
+    expect(parsed.additionalContext).toBeUndefined();
+    expect(parsed.additional_context).toBeUndefined();
+    expect(parsed.hookSpecificOutput?.hookEventName).toBe("UserPromptSubmit");
+    expect(parsed.hookSpecificOutput?.additionalContext).toContain(
+      "[OMA STATE SNAPSHOT]",
+    );
+  });
+
   it("wraps a Cursor state snapshot in both Cursor prompt context fields", () => {
     const rendered = renderStateSnapshot({
       vendor: "cursor",
