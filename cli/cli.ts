@@ -6,6 +6,7 @@ import { registerBridge } from "./commands/bridge/command.js";
 import { registerCleanup } from "./commands/cleanup/command.js";
 import { registerDocsCommands } from "./commands/docs/command.js";
 import { registerDoctor } from "./commands/doctor/command.js";
+import { registerHook } from "./commands/hook/command.js";
 import { registerImageCommand } from "./commands/image/index.js";
 import {
   registerDefaultInstallAction,
@@ -102,6 +103,7 @@ registerLink(program);
 registerIntelCommand(program);
 registerMarketCommand(program);
 registerDoctor(program);
+registerHook(program);
 registerEmit(program);
 registerState(program);
 registerStats(program);
