@@ -1,10 +1,18 @@
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   activateWorkflowSession,
   emitEvent,
+  eventsPath,
+  metaPath,
   readIndex,
   sessionDir,
 } from "../../state/events.js";
@@ -18,8 +26,10 @@ import {
   renderArchivedStateList,
   renderArchiveResult,
   renderPurgeResult,
+  renderRepairResult,
   renderSessionView,
   renderStateList,
+  repairStateSessions,
   viewSession,
 } from "./state.js";
 
@@ -306,5 +316,108 @@ describe("state command helpers", () => {
     const session = viewSession("oma-dup", projectDir);
     expect(session.archived).toBe(false);
     expect(session.meta.workflow).toBe("debug");
+  });
+
+  it("repairs corrupt meta and quarantines invalid event lines", () => {
+    activateWorkflowSession({
+      projectDir,
+      sid: "oma-repair",
+      workflow: "debug",
+    });
+    writeFileSync(metaPath(projectDir, "oma-repair"), "{bad json", "utf-8");
+    writeFileSync(
+      eventsPath(projectDir, "oma-repair"),
+      [
+        JSON.stringify({
+          sid: "oma-repair",
+          kind: "session.created",
+          eventId: "evt-valid",
+          ts: "2026-06-01T00:00:00.000Z",
+          writerPid: 1,
+          payload: { workflow: "debug", category: "main" },
+        }),
+        "{bad json",
+      ].join("\n"),
+      "utf-8",
+    );
+
+    const result = repairStateSessions({ projectDir });
+
+    expect(result.repairedMeta).toEqual(["oma-repair"]);
+    expect(result.quarantinedEvents).toEqual([
+      expect.objectContaining({ sid: "oma-repair", invalidLines: 1 }),
+    ]);
+    expect(
+      JSON.parse(readFileSync(metaPath(projectDir, "oma-repair"), "utf-8")),
+    ).toMatchObject({
+      sid: "oma-repair",
+      workflow: "debug",
+    });
+    expect(
+      readFileSync(eventsPath(projectDir, "oma-repair"), "utf-8"),
+    ).toContain("evt-valid");
+    expect(
+      readFileSync(eventsPath(projectDir, "oma-repair"), "utf-8"),
+    ).not.toContain("{bad json");
+    expect(
+      readFileSync(
+        join(sessionDir(projectDir, "oma-repair"), "events.bad.jsonl"),
+        "utf-8",
+      ),
+    ).toContain("{bad json");
+    expect(renderRepairResult(result)).toContain("OMA state repair");
+  });
+
+  it("supports repair dry-run without modifying state files", () => {
+    activateWorkflowSession({
+      projectDir,
+      sid: "oma-dry-run",
+      workflow: "work",
+    });
+    writeFileSync(metaPath(projectDir, "oma-dry-run"), "{bad json", "utf-8");
+    const before = readFileSync(metaPath(projectDir, "oma-dry-run"), "utf-8");
+
+    const result = repairStateSessions({ projectDir, dryRun: true });
+
+    expect(result.dryRun).toBe(true);
+    expect(result.repairedMeta).toEqual(["oma-dry-run"]);
+    expect(readFileSync(metaPath(projectDir, "oma-dry-run"), "utf-8")).toBe(
+      before,
+    );
+    expect(renderRepairResult(result)).toContain("repair preview");
+  });
+
+  it("removes stale active pointers and reassigns stale main to the newest session", () => {
+    activateWorkflowSession({
+      projectDir,
+      sid: "oma-live",
+      workflow: "work",
+    });
+    activateStateSession("missing-main", "main", projectDir);
+    activateStateSession("missing-tool", "tool.debug", projectDir);
+
+    const result = repairStateSessions({ projectDir });
+
+    expect(result.removedActive).toEqual([
+      { category: "main", sid: "missing-main" },
+      { category: "tool.debug", sid: "missing-tool" },
+    ]);
+    expect(result.reassignedActive).toEqual([
+      { category: "main", from: "missing-main", to: "oma-live" },
+    ]);
+    expect(readIndex(projectDir).active).toEqual({ main: "oma-live" });
+  });
+
+  it("reports no-op repair on healthy state", () => {
+    activateWorkflowSession({
+      projectDir,
+      sid: "oma-healthy",
+      workflow: "review",
+    });
+
+    const result = repairStateSessions({ projectDir });
+
+    expect(result.unchanged).toBe(true);
+    expect(renderRepairResult(result)).toContain("no repairs needed");
   });
 });

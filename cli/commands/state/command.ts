@@ -22,8 +22,10 @@ import {
   renderArchivedStateList,
   renderArchiveResult,
   renderPurgeResult,
+  renderRepairResult,
   renderSessionView,
   renderStateList,
+  repairStateSessions,
   viewSession,
 } from "./state.js";
 
@@ -48,6 +50,18 @@ export function registerState(program: Command): void {
         const archive = options.archive === true;
         const archived = options.archived === true;
         const purge = options.purge === true;
+
+        if (sid === "repair") {
+          const result = repairStateSessions({
+            dryRun: options.dryRun === true,
+          });
+          if (jsonMode) {
+            console.log(JSON.stringify(result, null, 2));
+          } else {
+            console.log(renderRepairResult(result));
+          }
+          return;
+        }
 
         if (activate) {
           activateStateSession(activate, category);
@@ -115,6 +129,27 @@ export function registerState(program: Command): void {
           console.log(JSON.stringify(state, null, 2));
         } else {
           console.log(renderStateList(state));
+        }
+      },
+      { supportsJsonOutput: true },
+    ),
+  );
+
+  addOutputOptions(
+    program
+      .command("state:repair")
+      .description("Repair OMA L1 workflow state files")
+      .option("--dry-run", "Preview repairs without writing changes"),
+  ).action(
+    runAction(
+      async (options) => {
+        const result = repairStateSessions({
+          dryRun: options.dryRun === true,
+        });
+        if (resolveJsonMode(options)) {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          console.log(renderRepairResult(result));
         }
       },
       { supportsJsonOutput: true },
