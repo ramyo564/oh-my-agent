@@ -1,7 +1,7 @@
 {
   "name": "oh-my-agent",
   "version": "8.29.0",
-  "releaseDate": "2026-06-02T14:35:23.674Z",
+  "releaseDate": "2026-06-02T14:48:59.000Z",
   "repository": "https://github.com/first-fluke/oh-my-agent",
   "files": [
     {
@@ -96,8 +96,8 @@
     },
     {
       "path": ".agents/hooks/core/agentmemory-client.ts",
-      "sha256": "fb0f08066f2078b729647fd9cbc6558577246c40bcc91c03614e9e9ae571c605",
-      "size": 3567
+      "sha256": "216e4ff6eafcd029008c2d8e899329c4245a9616566d6fc6cd67bcf92bac1db3",
+      "size": 5086
     },
     {
       "path": ".agents/hooks/core/constants.ts",
@@ -151,8 +151,8 @@
     },
     {
       "path": ".agents/hooks/core/state-emit.ts",
-      "sha256": "4fe13f7259e18c94a8857a2334e11c290804db7a36b3208a2fdfdf204272eaae",
-      "size": 5160
+      "sha256": "f160d9797f91c85471825016db62b299532da721f51fbdaed3633906eb50665e",
+      "size": 5177
     },
     {
       "path": ".agents/hooks/core/state-marker.ts",
