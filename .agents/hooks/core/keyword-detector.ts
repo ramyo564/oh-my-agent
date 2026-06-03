@@ -29,6 +29,7 @@ import {
 } from "./agy-input.ts";
 import { VENDORS } from "./constants.ts";
 import { resolveGitRoot } from "./fs-utils.ts";
+import { clearGrokContext } from "./grok-context.ts";
 import { makePromptOutput } from "./hook-output.ts";
 import type { ModeState, Vendor } from "./types.ts";
 
@@ -779,6 +780,8 @@ async function main() {
   // Check for deactivation request before workflow detection
   if (isDeactivationRequest(prompt, lang)) {
     deactivateAllPersistentModes(projectDir, sessionId);
+    // Grok's resume context lives in a session-start file, not L1 stdout — clear it.
+    if (vendor === "grok") clearGrokContext(projectDir);
     process.exit(0);
   }
   const infoPatterns = buildInformationalPatterns(config, lang);

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { agyConversationId, agyProjectDir, isAgyInput } from "./agy-input.ts";
 import { resolveGitRoot } from "./fs-utils.ts";
+import { syncGrokContext } from "./grok-context.ts";
 import { makePromptOutput } from "./hook-output.ts";
 import { writeInjectLog } from "./inject-log.ts";
 import { emitEvent, readEvents } from "./state-emit.ts";
@@ -169,6 +170,11 @@ export async function onBoundary(
     facts,
     rendered,
   });
+
+  // Grok ignores prompt-hook stdout, so mirror the snapshot to its session-start
+  // context file (CLAUDE.local.md). Loaded on the next Grok session = close-reopen
+  // resume on Grok. Best-effort; L1 events remain the SSOT.
+  if (vendor === "grok") syncGrokContext(projectDir, rendered);
 
   return rendered;
 }
