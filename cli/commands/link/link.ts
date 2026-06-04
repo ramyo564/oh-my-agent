@@ -42,6 +42,7 @@ import {
   parseCodexConfig,
   serializeCodexConfig,
 } from "../../vendors/codex/settings.js";
+import { disableCursorAgentAttribution } from "../../vendors/cursor/settings.js";
 import {
   applyGeminiSettings,
   needsGeminiSettingsUpdate,
@@ -382,10 +383,13 @@ export function link(opts: LinkOptions = {}): LinkResult {
     }
   }
 
-  // 5. Cursor-specific: MCP config (regular file, serena with --context=ide) + rules
+  // 5. Cursor-specific: MCP config (regular file, serena with --context=ide) +
+  //    rules + disable cursor-agent commit/PR attribution (no "Co-authored-by:
+  //    Cursor" stamping).
   if (configuredVendors.includes("cursor")) {
     applyCursorMcpConfig(cwd);
     applyCursorRules(cwd);
+    disableCursorAgentAttribution();
   }
 
   // 6. Merge vendor documentation (CLAUDE.md, GEMINI.md, AGENTS.md)
