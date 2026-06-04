@@ -1,7 +1,7 @@
 {
   "name": "oh-my-agent",
   "version": "8.34.1",
-  "releaseDate": "2026-06-04T04:26:51.469Z",
+  "releaseDate": "2026-06-04T05:18:11.248Z",
   "repository": "https://github.com/first-fluke/oh-my-agent",
   "files": [
     {
@@ -976,8 +976,8 @@
     },
     {
       "path": ".agents/skills/oma-hwp/SKILL.md",
-      "sha256": "48fb365f065575b2f342297a08ce6d5cf7dee5aab6b7c0af0f623402214a9039",
-      "size": 7708
+      "sha256": "6c33894b863ca90e9a144aaa4116347051d526a12bb0f07cfd16a712a53cf759",
+      "size": 7705
     },
     {
       "path": ".agents/skills/oma-hwp/config/hwp-config.yaml",
@@ -986,28 +986,38 @@
     },
     {
       "path": ".agents/skills/oma-hwp/resources/bun.lock",
-      "sha256": "a2ac38e072aa2e0001635b68175b54b85f993d962e32be963754ba79bd22c684",
-      "size": 776
+      "sha256": "42ff5eed21e6b7e38b03679b70986f3064ab600768cf5904592901d1dd43cb08",
+      "size": 1401
     },
     {
       "path": ".agents/skills/oma-hwp/resources/execution-protocol.md",
-      "sha256": "06dae6fa122c02ba3e3e5f9299c341e4fd59ca216721478c3a243d79445b3c6f",
-      "size": 5192
+      "sha256": "5995c2517314ba99e84ecbc7295b82512def32636bfff394fdaa44b12fe9386d",
+      "size": 5189
     },
     {
       "path": ".agents/skills/oma-hwp/resources/flatten-tables.ts",
-      "sha256": "74b776b55de5354f604838b1c9806267466037b40388c42a7e0676c55245edf0",
-      "size": 2163
+      "sha256": "c5b3308cc45e08eac663000984d6c2bd455bce1e702b561c30339b7f928e99b4",
+      "size": 2445
     },
     {
       "path": ".agents/skills/oma-hwp/resources/package.json",
-      "sha256": "95b318aba3eba3dbfcb4768e52d6b73ea247421005fba27cb4ae1dce28a116b6",
-      "size": 162
+      "sha256": "e5cac60536a38c7fab13fbe4cd74ea7d6b98d23647e9ed7f3a744f4db3649c5f",
+      "size": 252
     },
     {
       "path": ".agents/skills/oma-hwp/resources/troubleshooting.md",
       "sha256": "f7cd2d4107be31778d6eb3ad38a0f20ac3921ed26b4dbbee400e30ab9dccf195",
       "size": 3704
+    },
+    {
+      "path": ".agents/skills/oma-hwp/resources/tsconfig.json",
+      "sha256": "4894abcb137db941b7eacbec90acc6e21d2f82eae4d7332730fd094d9a1cf983",
+      "size": 185
+    },
+    {
+      "path": ".agents/skills/oma-hwp/resources/turndown-plugin-gfm.d.ts",
+      "sha256": "9cfd4a417d25e778ffeb4619c769e0a6e261970dc4a719330b18069552d35b55",
+      "size": 444
     },
     {
       "path": ".agents/skills/oma-image/SKILL.md",
@@ -1946,6 +1956,6 @@
   "metadata": {
     "skillCount": 48,
     "workflowCount": 21,
-    "totalFiles": 387
+    "totalFiles": 389
   }
 }
