@@ -1095,6 +1095,65 @@ See the [Skill Utility Eval guide](../guide/skill-eval.md) for the `.agents/eval
 
 ---
 
+### skills opt
+
+Optimize a skill's `SKILL.md` to maximize its measured held-out utility lift. An optimizer LLM proposes bounded add/delete/replace edits; each edit is applied to a candidate copy, re-scored by `skills eval` on the held-out validation split, and accepted only when the validation lift strictly improves. Research basis: SkillOpt (arXiv:2605.23904).
+
+```
+oma skills opt [--skill <id>] [--dry-run | --apply] [--mock | --live]
+               [--max-epochs <n>] [--edits-per-epoch <k>] [--lr <chars>]
+               [--yes] [--json] [--output <format>]
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|:-----|:--------|:-----------|
+| `--skill <id>` | `_all` | Skill ID to optimize (simple name, no path separators). |
+| `--dry-run` | **yes (default)** | Propose edits and print the diff; write nothing. |
+| `--apply` | — | Apply accepted edits; backs up the original as `SKILL.md.bak` and writes only a validated improvement. |
+| `--mock` | **yes (default)** | Replay recorded optimizer edits and eval verdicts (deterministic, offline). Safe for CI. |
+| `--live` | — | Live LLM optimizer dispatch — incurs real model calls per epoch. Prints a cost preview and prompts for confirmation unless `--yes`. |
+| `--max-epochs <n>` | `8` | Maximum optimization epochs. |
+| `--edits-per-epoch <k>` | `4` | Candidate edits proposed per epoch. |
+| `--lr <chars>` | `600` | Textual learning-rate budget: maximum net character change per edit. |
+| `--yes` | — | Skip cost-preview confirmation (only with `--live`). |
+| `--json` | — | Output as JSON for CI/CD. |
+| `--output <format>` | `text` | Output format (`text` or `json`). |
+
+**Hard dependency:** Requires at least 5 task fixtures in `.agents/eval/<skill>/`. Errors with a clear message when fewer are found. See the [Skill Utility Eval guide](../guide/skill-eval.md) for authoring them.
+
+**Train/val split:** The optimizer sees only the TRAIN tasks' findings when proposing edits; the accept gate scores on the held-out VALIDATION split (`OPT_TRAIN_VAL_SPLIT = 0.5`, 50/50 default). An edit that regresses on the validation split is always rejected.
+
+**SSOT caveat:** Skills whose ID starts with `oma-` are overwritten by `oma update`. For those skills, `--apply` is discouraged — use the default `--dry-run` and upstream the proposed diff. User-authored skills apply freely.
+
+**Exit codes:** `0` optimization completed; `1` insufficient fixtures or invalid argument.
+
+**Examples:**
+```bash
+# Propose edits (dry-run, mock — writes nothing, fully offline)
+oma skills opt --skill oma-scholar --mock --dry-run
+
+# Apply accepted edits (backs up original first)
+oma skills opt --skill oma-scholar --mock --apply
+
+# Live optimizer with cost preview
+oma skills opt --skill oma-scholar --live
+
+# Live optimizer, skip confirmation, apply if improved
+oma skills opt --skill oma-scholar --live --apply --yes
+
+# JSON output for CI
+oma skills opt --skill oma-scholar --json
+
+# Tune epochs and edits budget
+oma skills opt --skill oma-scholar --max-epochs 4 --edits-per-epoch 2 --lr 300
+```
+
+See the [Skill Optimization guide](../guide/skill-opt.md) for the full end-to-end walkthrough and SSOT / overfitting guard details.
+
+---
+
 ### help
 
 Show help information.
