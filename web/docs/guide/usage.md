@@ -260,7 +260,7 @@ Cross-vendor tasks still use `oma agent:spawn`.
 | `/design` | Non-persistent | 7-phase design workflow producing DESIGN.md with tokens | Building design systems, landing pages, UI redesigns |
 | `/scm` | Non-persistent | SCM workflow for Git (branch/merge/conflict/worktree/baseline) plus Conventional Commit generation with auto type/scope detection and feature splitting | After completing code changes or when handling repository configuration management tasks |
 | `/tools` | Non-persistent | MCP tool visibility management (enable/disable groups) | Controlling which MCP tools agents can use |
-| `/stack-set` | Non-persistent | Auto-detect project tech stack and generate backend references | Setting up language-specific coding conventions |
+| `/stack-set` | Non-persistent | Auto-detect project tech stack and generate backend or mobile (Swift/Flutter/RN) references | Setting up language-specific coding conventions |
 | `/ralph` | Persistent | Self-referential completion loop wrapping ultrawork with independent judge | When agents must keep working until verifiable criteria pass |
 
 ---
@@ -313,7 +313,7 @@ oh-my-agent detects workflow keywords in 11 languages. Here are examples showing
 | **oma-frontend** | UI components, forms, pages, styling | React/TypeScript components, Vitest tests |
 | **oma-backend** | APIs, auth, server logic, migrations | Endpoints, models, services, tests |
 | **oma-db** | Schema design, ERD, query tuning, capacity planning | Schema documentation, migration scripts, glossary |
-| **oma-mobile** | Mobile apps, platform features | Flutter screens, state management, tests |
+| **oma-mobile** | Mobile apps, platform features | Flutter screens, state management, tests; Swift native iOS (SwiftUI, swift-openapi-generator) |
 | **oma-design** | Design systems, landing pages, tokens | `DESIGN.md`, CSS/Tailwind tokens, component specs |
 | **oma-qa** | Security audit, performance, accessibility | QA report with CRITICAL/HIGH/MEDIUM/LOW findings |
 | **oma-debug** | Bug investigation, root cause analysis | Fixed code + regression tests + similar pattern fixes |

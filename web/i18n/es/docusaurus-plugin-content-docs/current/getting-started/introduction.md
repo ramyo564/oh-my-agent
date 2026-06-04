@@ -45,7 +45,7 @@ oh-my-agent resuelve esto con especialización:
 |--------|-----|------------------------------|
 | **oma-frontend** | Especialista en UI/UX | React, Next.js, TypeScript, TailwindCSS v4, shadcn/ui, arquitectura FSD-lite. Librerías: luxon (fechas), ahooks (hooks), es-toolkit (utilidades), Jotai (estado cliente), TanStack Query (estado servidor), @tanstack/react-form + Zod (formularios), better-auth (autenticación), nuqs (estado URL). Recursos: `execution-protocol.md`, `tech-stack.md`, `tailwind-rules.md`, `component-template.tsx`, `snippets.md`, `error-playbook.md`, `checklist.md`, `examples/`. |
 | **oma-backend** | Especialista en API y servidor | Arquitectura limpia (Router-Service-Repository-Models). Agnóstico al stack — detecta Python/Node.js/Rust/Go/Java/Elixir/Ruby/.NET desde los manifiestos del proyecto. JWT + bcrypt para autenticación. Recursos: `execution-protocol.md`, `orm-reference.md`, `examples.md`, `checklist.md`, `error-playbook.md`. Soporta `/stack-set` para generar referencias `stack/` específicas del lenguaje. |
-| **oma-mobile** | Multiplataforma móvil | Flutter, Dart, Riverpod/Bloc para gestión de estado, Dio con interceptores para llamadas API, GoRouter para navegación. Arquitectura limpia: domain-data-presentation. Material Design 3 (Android) + iOS HIG. Objetivo de 60fps. Recursos: `execution-protocol.md`, `tech-stack.md`, `snippets.md`, `screen-template.dart`, `checklist.md`, `error-playbook.md`. |
+| **oma-mobile** | Móvil multiplataforma | Flutter, Dart, Riverpod/Bloc para gestión de estado, Dio con interceptores para llamadas API, GoRouter para navegación. Arquitectura limpia: domain-data-presentation. Material Design 3 (Android) + iOS HIG. Objetivo de 60fps. También soporta Swift nativo para iOS: SwiftUI + `@Observable` (iOS 17+), `swift-openapi-generator` de Apple para clientes de API, estructura de proyecto `App/Core/Features/Shared`. Recursos: `execution-protocol.md`, `tech-stack.md`, `snippets.md`, `screen-template.dart`, `screen-template.swift`, `checklist.md`, `error-playbook.md`. Referencias de la variante en `variants/swift-ios/` (generadas por `/stack-set`). |
 | **oma-db** | Arquitectura de bases de datos | Modelado de bases de datos SQL, NoSQL y vectoriales. Diseño de esquemas (3NF por defecto), normalización, indexación, transacciones, planificación de capacidad, estrategia de respaldos. Soporta diseño consciente de ISO 27001/27002/22301. Recursos: `execution-protocol.md`, `document-templates.md`, `anti-patterns.md`, `vector-db.md`, `iso-controls.md`, `checklist.md`, `error-playbook.md`. |
 
 ### Diseño
@@ -156,7 +156,7 @@ Cuando envías un prompt, oh-my-agent determina qué agente lo maneja usando el 
 | auth, JWT, login, register, password | oma-backend |
 | UI, component, page, form, screen (web) | oma-frontend |
 | style, Tailwind, responsive, CSS | oma-frontend |
-| mobile, iOS, Android, Flutter, React Native, app | oma-mobile |
+| mobile, iOS, Android, Flutter, React Native, Swift, SwiftUI, app | oma-mobile |
 | bug, error, crash, broken, slow | oma-debug |
 | review, security, performance, accessibility | oma-qa |
 | UI design, design system, landing page, DESIGN.md | oma-design |

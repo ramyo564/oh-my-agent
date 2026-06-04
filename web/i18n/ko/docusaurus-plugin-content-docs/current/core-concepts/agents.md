@@ -175,21 +175,24 @@ oh-my-agent의 에이전트는 전문화된 엔지니어링 역할입니다. 각
 
 ### oma-mobile
 
-**도메인:** 크로스 플랫폼 모바일 앱 (Flutter, React Native).
+**도메인:** 크로스 플랫폼 및 네이티브 모바일 앱 (Flutter, React Native, Swift 네이티브 iOS).
 
-**사용 시기:** 네이티브 모바일 앱(iOS + Android), 모바일 특화 UI 패턴, 플랫폼 기능(카메라, GPS, 푸시 알림), 오프라인 우선 아키텍처.
+**사용 시기:** 네이티브 모바일 앱(iOS + Android), 모바일 특화 UI 패턴, 플랫폼 기능(카메라, GPS, 푸시 알림), 오프라인 우선 아키텍처; SwiftUI와 `swift-openapi-generator`를 사용하는 Swift 네이티브 iOS 앱.
 
-**아키텍처:** 클린 아키텍처: domain -> data -> presentation.
+**아키텍처:** 클린 아키텍처: domain -> data -> presentation. Swift iOS의 경우: `App/Core/Features/Shared` 프로젝트 레이아웃.
 
-**기술 스택:** Flutter/Dart, Riverpod/Bloc (상태 관리), Dio with interceptors (API), GoRouter (네비게이션), Material Design 3 (Android) + iOS HIG.
+**기술 스택:**
+- Flutter/Dart: Riverpod/Bloc (상태 관리), Dio with interceptors (API), GoRouter (네비게이션), Material Design 3 (Android) + iOS HIG.
+- Swift 네이티브 iOS (iOS 17+): SwiftUI + `@Observable` (Observation framework), API 클라이언트용 Apple `swift-openapi-generator`, `App/Core/Features/Shared` 레이아웃.
 
 **핵심 규칙:**
 - 상태 관리에 Riverpod/Bloc (복잡한 로직에 raw setState 금지)
 - 모든 컨트롤러를 `dispose()` 메서드에서 해제
 - API 호출에 interceptors가 있는 Dio; 오프라인을 우아하게 처리
 - 60fps 목표; 양 플랫폼에서 테스트
+- Swift: iOS 17+에서는 `ObservableObject` 대신 `@Observable` 사용; `swift-openapi-generator`로 OpenAPI 스펙에서 API 클라이언트 생성
 
-**리소스:** `execution-protocol.md`, `tech-stack.md`, `snippets.md`, `screen-template.dart`, `checklist.md`, `error-playbook.md`, `examples.md`.
+**리소스:** `execution-protocol.md`, `tech-stack.md`, `snippets.md`, `screen-template.dart`, `screen-template.swift`, `checklist.md`, `error-playbook.md`, `examples.md`. `variants/swift-ios/`의 Swift 변형 레퍼런스(`/stack-set`으로 생성: `stack.yaml`, `tech-stack.md`, `snippets.md`, `api-template.swift`).
 
 **턴 제한:** 기본 20, 최대 30.
 

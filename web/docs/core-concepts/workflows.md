@@ -389,13 +389,13 @@ Noun whitelist (15): app, api, service, server, cli, tool, website, dashboard, s
 
 ### /stack-set
 
-**Description:** Auto-detect project tech stack and generate language-specific references for the backend skill.
+**Description:** Auto-detect project tech stack and generate language-specific references for the resolved domain skill (backend or mobile). Detects mobile stacks (Swift/iOS via `Package.swift`/`.xcodeproj`, Flutter via `pubspec.yaml`, React Native via `package.json` + react-native) and routes to `oma-mobile`; otherwise routes to `oma-backend`. In monorepos where both are present, asks which to configure.
 
 **Trigger keywords:** None (excluded from auto-detection).
 
-**Steps:** Detect (scan manifests: pyproject.toml, package.json, Cargo.toml, pom.xml, go.mod, mix.exs, Gemfile, *.csproj) -> Confirm (display detected stack, get user confirmation) -> Generate (`stack/stack.yaml`, `stack/tech-stack.md`, `stack/snippets.md` with 8 mandatory patterns, `stack/api-template.*`) -> Verify.
+**Steps:** Detect (scan manifests: pyproject.toml, package.json, Cargo.toml, pom.xml, go.mod, mix.exs, Gemfile, *.csproj, Package.swift, *.xcodeproj, pubspec.yaml) -> Confirm (display detected stack, get user confirmation) -> Generate (`stack/stack.yaml`, `stack/tech-stack.md`, `stack/snippets.md` with 8 mandatory patterns, `stack/api-template.*`) -> Verify.
 
-**Output:** Files in `.agents/skills/oma-backend/stack/`. Does not modify SKILL.md or `resources/`.
+**Output:** Files in the resolved domain skill's `stack/` directory (e.g. `.agents/skills/oma-backend/stack/` or `.agents/skills/oma-mobile/stack/`). Does not modify SKILL.md or `resources/`.
 
 ---
 

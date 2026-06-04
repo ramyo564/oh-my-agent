@@ -175,21 +175,24 @@ Agentes no oh-my-agent são papéis especializados de engenharia. Cada agente po
 
 ### oma-mobile
 
-**Domínio:** Apps mobile multiplataforma — Flutter, React Native.
+**Domínio:** Apps mobile multiplataforma e nativos — Flutter, React Native e Swift native iOS.
 
-**Quando usar:** Apps mobile nativos (iOS + Android), padrões de UI específicos mobile, funcionalidades de plataforma (câmera, GPS, push notifications), arquitetura offline-first.
+**Quando usar:** Apps mobile nativos (iOS + Android), padrões de UI específicos mobile, funcionalidades de plataforma (câmera, GPS, push notifications), arquitetura offline-first; apps Swift native iOS usando SwiftUI e `swift-openapi-generator`.
 
-**Arquitetura:** Clean Architecture: domain -> data -> presentation.
+**Arquitetura:** Clean Architecture: domain -> data -> presentation. Para Swift iOS: layout de projeto `App/Core/Features/Shared`.
 
-**Stack tecnológico:** Flutter/Dart, Riverpod/Bloc (gerenciamento de estado), Dio com interceptors (API), GoRouter (navegação), Material Design 3 (Android) + iOS HIG.
+**Stacks tecnológicos:**
+- Flutter/Dart: Riverpod/Bloc (gerenciamento de estado), Dio com interceptors (API), GoRouter (navegação), Material Design 3 (Android) + iOS HIG.
+- Swift native iOS (iOS 17+): SwiftUI + `@Observable` (Observation framework), `swift-openapi-generator` da Apple para clientes de API, layout `App/Core/Features/Shared`.
 
 **Regras principais:**
 - Riverpod/Bloc para gerenciamento de estado (sem setState bruto para lógica complexa)
 - Todos os controllers dispostos no método `dispose()`
 - Dio com interceptors para chamadas de API; tratar offline graciosamente
 - Meta de 60fps; testar em ambas as plataformas
+- Swift: usar `@Observable` em vez de `ObservableObject` no iOS 17+; gerar clientes de API a partir de specs OpenAPI via `swift-openapi-generator`
 
-**Recursos:** `execution-protocol.md`, `tech-stack.md`, `snippets.md`, `screen-template.dart`, `checklist.md`, `error-playbook.md`, `examples.md`.
+**Recursos:** `execution-protocol.md`, `tech-stack.md`, `snippets.md`, `screen-template.dart`, `screen-template.swift`, `checklist.md`, `error-playbook.md`, `examples.md`. Referências da variante Swift em `variants/swift-ios/` (geradas por `/stack-set`: `stack.yaml`, `tech-stack.md`, `snippets.md`, `api-template.swift`).
 
 **Limite de turnos:** Padrão 20, máximo 30.
 

@@ -175,21 +175,24 @@ description: Полный справочник по всем 21 агентам o
 
 ### oma-mobile
 
-**Домен:** Кроссплатформенные мобильные приложения — Flutter, React Native.
+**Домен:** Кроссплатформенные и нативные мобильные приложения (Flutter, React Native и Swift native iOS).
 
-**Когда использовать:** Нативные мобильные приложения (iOS + Android), мобильные UI-паттерны, платформенные функции (камера, GPS, push-уведомления), offline-first архитектура.
+**Когда использовать:** Нативные мобильные приложения (iOS + Android), мобильные UI-паттерны, платформенные функции (камера, GPS, push-уведомления), offline-first архитектура; нативные iOS-приложения на Swift с использованием SwiftUI и `swift-openapi-generator`.
 
-**Архитектура:** Clean Architecture: domain -> data -> presentation.
+**Архитектура:** Clean Architecture: domain -> data -> presentation. Для Swift iOS: структура проекта `App/Core/Features/Shared`.
 
-**Технологический стек:** Flutter/Dart, Riverpod/Bloc (управление состоянием), Dio с интерсепторами (API), GoRouter (навигация), Material Design 3 (Android) + iOS HIG.
+**Технологические стеки:**
+- Flutter/Dart: Riverpod/Bloc (управление состоянием), Dio с интерсепторами (API), GoRouter (навигация), Material Design 3 (Android) + iOS HIG.
+- Swift native iOS (iOS 17+): SwiftUI + `@Observable` (Observation framework), Apple `swift-openapi-generator` для API-клиентов, структура `App/Core/Features/Shared`.
 
 **Основные правила:**
 - Riverpod/Bloc для управления состоянием (без raw setState для сложной логики)
 - Все контроллеры освобождаются в методе `dispose()`
 - Dio с интерсепторами для API-вызовов; корректная обработка offline
 - Цель 60fps; тестирование на обеих платформах
+- Swift: использовать `@Observable` вместо `ObservableObject` на iOS 17+; генерировать API-клиенты из OpenAPI-спецификаций через `swift-openapi-generator`
 
-**Ресурсы:** `execution-protocol.md`, `tech-stack.md`, `snippets.md`, `screen-template.dart`, `checklist.md`, `error-playbook.md`, `examples.md`.
+**Ресурсы:** `execution-protocol.md`, `tech-stack.md`, `snippets.md`, `screen-template.dart`, `screen-template.swift`, `checklist.md`, `error-playbook.md`, `examples.md`. Справочники по варианту Swift в `variants/swift-ios/` (генерируются `/stack-set`: `stack.yaml`, `tech-stack.md`, `snippets.md`, `api-template.swift`).
 
 **Лимит ходов:** По умолчанию 20, максимум 30.
 
