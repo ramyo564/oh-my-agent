@@ -350,6 +350,17 @@ export function runAction<T extends unknown[]>(
 ) {
   return async (...args: T) => {
     const command = getActionCommand(args);
+
+    // Commander stores global/parent options (e.g. the root-program's `-y/--yes`)
+    // in the ancestor command's _optionValues, not the subcommand's. This means
+    // args[0] (which commander sets to `command.opts()`) is missing any option
+    // that was parsed into a parent. Replace args[0] with `optsWithGlobals()` so
+    // every handler receives the full merged option set regardless of where in the
+    // command tree the flag was registered.
+    if (command && args.length > 0) {
+      (args as unknown[])[0] = command.optsWithGlobals();
+    }
+
     const options = getActionOptions(args);
 
     try {
