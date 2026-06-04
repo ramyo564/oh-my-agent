@@ -22,7 +22,7 @@ export const SKILLS: SkillsRegistry = {
     },
     {
       name: "oma-mobile",
-      desc: `Mobile specialist for Flutter, React Native, and cross-platform mobile development. Use for mobile app, Flutter, Dart, iOS, Android, Riverpod, and widget work.`,
+      desc: `Mobile specialist for Flutter, React Native, and Swift native iOS development. Use for mobile app, Flutter, Dart, React Native, Swift, SwiftUI, iOS, Android, Riverpod, swift-openapi-generator, and widget work.`,
     },
   ],
   design: [
