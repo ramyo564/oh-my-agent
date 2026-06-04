@@ -41,7 +41,9 @@ import {
   ALL_CLI_VENDORS,
   CLI_SKILLS_DIR,
   createVendorSymlinks,
+  createVendorWorkflowSymlinks,
   getInstalledSkillNames,
+  getInstalledWorkflowNames,
   REPO,
   vendorRequiresHomeConsent,
 } from "../../platform/skills-installer.js";
@@ -473,6 +475,15 @@ export async function update(options: UpdateOptions = {}): Promise<void> {
                 getInstalledSkillNames(cwd),
               )
             : { created: [], skipped: [] };
+
+        // Workflows are surfaced via direct symlinks at .agents/workflows/*.md.
+        if (updateVendors.length > 0) {
+          createVendorWorkflowSymlinks(
+            cwd,
+            toCliTools(updateVendors),
+            getInstalledWorkflowNames(cwd),
+          );
+        }
 
         // Vendor adaptations complete — clear reconcile flag
         if (needsReconcile) {

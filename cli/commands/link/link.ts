@@ -12,9 +12,10 @@ import {
 import {
   applyCursorMcpConfig,
   createVendorSymlinks,
+  createVendorWorkflowSymlinks,
   detectExistingCliSymlinkDirs,
   getInstalledSkillNames,
-  installCodexWorkflowSkills,
+  getInstalledWorkflowNames,
   installCopilotWorkflowPrompts,
   installVendorAdaptations,
   isExtensionVendor,
@@ -274,9 +275,8 @@ export function link(opts: LinkOptions = {}): LinkResult {
     installCopilotWorkflowPrompts(cwd, cwd);
   }
 
-  // 4e. Codex `.codex/config.toml` + workflow skills.
+  // 4e. Codex `.codex/config.toml`.
   if (configuredVendors.includes("codex")) {
-    installCodexWorkflowSkills(cwd, cwd);
     const codexConfigPath = join(cwd, ".codex", "config.toml");
     const rawToml = existsSync(codexConfigPath)
       ? readFileSync(codexConfigPath, "utf-8")
@@ -416,6 +416,17 @@ export function link(opts: LinkOptions = {}): LinkResult {
       );
       if (skillNames.length > 0 && safeCliTools.length > 0) {
         const { created } = createVendorSymlinks(cwd, safeCliTools, skillNames);
+        symlinksCreated.push(...created);
+      }
+      // Workflows are surfaced as slash-command skills via direct symlinks at
+      // `.agents/workflows/<name>.md` (no generated wrapper under .agents/skills).
+      const workflowNames = getInstalledWorkflowNames(cwd);
+      if (workflowNames.length > 0 && safeCliTools.length > 0) {
+        const { created } = createVendorWorkflowSymlinks(
+          cwd,
+          safeCliTools,
+          workflowNames,
+        );
         symlinksCreated.push(...created);
       }
     }

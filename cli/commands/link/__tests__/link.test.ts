@@ -19,11 +19,12 @@ vi.mock("../../../platform/rules.js", () => ({
 
 vi.mock("../../../platform/skills-installer.js", () => ({
   createVendorSymlinks: vi.fn(() => ({ created: [], skipped: [] })),
+  createVendorWorkflowSymlinks: vi.fn(() => ({ created: [], skipped: [] })),
   createCliSymlinks: vi.fn(() => ({ created: [], skipped: [] })),
   detectExistingCliSymlinkDirs: vi.fn(() => []),
   applyCursorMcpConfig: vi.fn(),
   getInstalledSkillNames: vi.fn(() => []),
-  installCodexWorkflowSkills: vi.fn(),
+  getInstalledWorkflowNames: vi.fn(() => []),
   installCopilotWorkflowPrompts: vi.fn(),
   installVendorAdaptations: vi.fn(),
   isHookVendor: vi.fn((v: string) =>
