@@ -66,6 +66,44 @@ export function hasLocalVideoRef(html: string): boolean {
 // ─── Font CDN link extraction ─────────────────────────────────────────────────
 
 /**
+ * Hosts allowed for `--inline-fonts` remote fetches. Deck HTML is
+ * agent-generated / import-pptx-ingested and therefore attacker-influenceable,
+ * so the `<link href>` it carries is untrusted. Restricting fetches to known
+ * public font CDNs closes the SSRF vector (no internal/metadata endpoints, no
+ * loopback/link-local) — anything else degrades gracefully to a kept `<link>`
+ * tag (the same as not passing --inline-fonts).
+ */
+const ALLOWED_FONT_HOSTS = new Set<string>([
+  "fonts.googleapis.com",
+  "fonts.gstatic.com",
+  "fonts.bunny.net",
+  "use.typekit.net",
+  "cdn.jsdelivr.net",
+]);
+
+/**
+ * Return true only for an https URL whose host is an allowlisted font CDN.
+ */
+export function isAllowedFontUrl(href: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return false;
+  }
+  return url.protocol === "https:" && ALLOWED_FONT_HOSTS.has(url.hostname);
+}
+
+/**
+ * Neutralise a `</style>` (or `</style ...>`) sequence inside fetched CSS so it
+ * cannot break out of the `<style>` wrapper and inject markup/script into the
+ * generated deck.html. Mirrors the inline-script escaping used elsewhere.
+ */
+export function neutralizeStyleBreakout(css: string): string {
+  return css.replace(/<\/(style)/gi, "<\\/$1");
+}
+
+/**
  * Extract remote CDN <link rel="stylesheet"> tags (fonts, preconnect etc.)
  * that should be preserved by default (or inlined when --inline-fonts).
  */
@@ -321,13 +359,28 @@ async function tryInlineFonts(
       failed.push(linkTag);
       continue;
     }
+    // SSRF guard: only fetch https URLs on an allowlisted public font CDN, and
+    // fail closed on any redirect (which could re-target an internal host).
+    if (!isAllowedFontUrl(href)) {
+      failed.push(linkTag);
+      continue;
+    }
     try {
       const res = await fetch(href, {
         signal: AbortSignal.timeout(5000),
+        redirect: "error",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // Reject anything that is not CSS so a non-stylesheet response can't be
+      // smuggled into a <style> block.
+      const contentType = res.headers.get("content-type") ?? "";
+      if (contentType && !contentType.toLowerCase().includes("text/css")) {
+        throw new Error(`unexpected content-type "${contentType}"`);
+      }
       const css = await res.text();
-      succeeded.push(css);
+      // XSS guard: neutralise any </style> breakout before the caller wraps
+      // this text in a <style> block.
+      succeeded.push(neutralizeStyleBreakout(css));
     } catch {
       failed.push(linkTag);
     }
