@@ -676,7 +676,6 @@ export async function install(options: InstallOptions = {}): Promise<void> {
       }
     }
 
-
     // Build selectedClis from CLI_SKILLS_DIR (data-driven). Vendors with
     // requiresHomeConsent require explicit consent; other vendors are added directly.
     const cliToolKeys = Object.keys(CLI_SKILLS_DIR) as CliTool[];
