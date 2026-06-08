@@ -196,6 +196,7 @@ const VENDOR_ROOTS: Record<CliVendor, string[]> = {
   antigravity: [".gemini/antigravity-cli"],
   claude: [".claude"],
   codex: [".codex"],
+  commandcode: [".commandcode"],
   copilot: [".github"],
   cursor: [".cursor"],
   gemini: [".gemini"],

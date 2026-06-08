@@ -18,6 +18,7 @@ export const VENDORS = [
   "antigravity",
   "claude",
   "codex",
+  "commandcode",
   "cursor",
   "gemini",
   "grok",
@@ -60,6 +61,11 @@ export interface SkillTargetSpec {
    * before proceeding. Today only `hermes` qualifies.
    */
   requiresHomeConsent?: boolean;
+  /**
+   * When true, this vendor is shown in the install prompt but NOT selected
+   * by default. Users must explicitly opt in.
+   */
+  optIn?: boolean;
 }
 
 export const CLI_SKILLS_DIR: Record<CliTool, SkillTargetSpec> = {
@@ -70,6 +76,11 @@ export const CLI_SKILLS_DIR: Record<CliTool, SkillTargetSpec> = {
   },
   claude: { projectPath: ".claude/skills", homePath: ".claude/skills" },
   codex: { projectPath: ".codex/skills", homePath: ".codex/skills" },
+  commandcode: {
+    projectPath: ".commandcode/skills",
+    homePath: ".commandcode/skills",
+    optIn: true,
+  },
   copilot: { projectPath: ".github/skills", homePath: ".copilot/skills" },
   cursor: { projectPath: ".cursor/skills", homePath: ".cursor/skills" },
   gemini: { projectPath: ".gemini/skills", homePath: ".gemini/skills" },
@@ -78,6 +89,6 @@ export const CLI_SKILLS_DIR: Record<CliTool, SkillTargetSpec> = {
     homePath: ".hermes/skills/oma",
     requiresHomeConsent: true,
   },
-  kiro: { projectPath: ".kiro/skills", homePath: ".kiro/skills" },
+  kiro: { projectPath: ".kiro/skills", homePath: ".kiro/skills", optIn: true },
   qwen: { projectPath: ".qwen/skills", homePath: ".qwen/skills" },
 };

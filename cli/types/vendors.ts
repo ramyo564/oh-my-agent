@@ -14,6 +14,7 @@ export const CLI_TOOLS = [
   "antigravity",
   "claude",
   "codex",
+  "commandcode",
   "copilot",
   "cursor",
   "gemini",
