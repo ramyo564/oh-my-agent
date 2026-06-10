@@ -5,9 +5,8 @@
  * Tracks usage per agent/vendor and checks against configured quota caps
  * so users can be warned before the next agent spawn when a threshold is crossed.
  *
- * Storage: .serena/memories/session-cost-{sessionId}.md
- * Format: Markdown with YAML frontmatter + one JSON code block per record
- * Concurrency: append-only via appendFileSync (atomic on POSIX for small writes)
+ * Storage: .serena/memories/session-cost-{sessionId}.md via the shared
+ * MarkdownRecordStore (see io/markdown-records.ts).
  *
  * Cap source precedence:
  *   1. .agents/oma-config.yaml               — canonical user config (wins)
@@ -15,15 +14,14 @@
  * under top-level `session.quota_cap` key.
  */
 
-import fs, {
-  appendFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-} from "node:fs";
-import path, { join } from "node:path";
+import fs, { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
 import { parse as parseYaml } from "yaml";
+import {
+  createMarkdownRecordStore,
+  MEMORIES_BASE,
+  readFileContent,
+} from "./markdown-records.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -61,74 +59,21 @@ export interface CheckCapResult {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-const MEMORIES_BASE = ".serena/memories";
-
-// Session IDs are safe filename components. Reject anything that could
-// traverse out of MEMORIES_BASE or embed shell/path metacharacters. The
-// orchestrator generates IDs like "session-20260423-141500"; 64-char
-// alphanumeric + `_-.` is more than enough. Reject everything else.
-const SESSION_ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
-
-function assertSafeSessionId(sessionId: string): void {
-  if (!SESSION_ID_PATTERN.test(sessionId)) {
-    throw new Error(
-      `Invalid sessionId ${JSON.stringify(sessionId)}. Must match ${SESSION_ID_PATTERN} (alphanumeric, dot, underscore, hyphen, up to 64 chars).`,
+const usageStore = createMarkdownRecordStore<UsageRecord>({
+  filePrefix: "session-cost",
+  title: "Session Cost",
+  isRecordValid: (value) => {
+    const record = value as UsageRecord | null;
+    return (
+      !!record &&
+      typeof record.sessionId === "string" &&
+      typeof record.vendor === "string" &&
+      typeof record.agentId === "string" &&
+      typeof record.tokens === "number" &&
+      typeof record.recordedAt === "string"
     );
-  }
-}
-
-function sessionCostFilePath(sessionId: string): string {
-  assertSafeSessionId(sessionId);
-  return join(MEMORIES_BASE, `session-cost-${sessionId}.md`);
-}
-
-function buildFrontmatter(sessionId: string): string {
-  return `---\nsession: ${sessionId}\ncreated: ${new Date().toISOString()}\n---\n\n# Session Cost\n\n`;
-}
-
-function serializeRecord(record: UsageRecord): string {
-  const json = JSON.stringify(record);
-  return `\`\`\`json\n${json}\n\`\`\`\n\n`;
-}
-
-function parseRecords(content: string): UsageRecord[] {
-  const records: UsageRecord[] = [];
-  const pattern = /```json\n([\s\S]*?)\n```/g;
-
-  for (const match of content.matchAll(pattern)) {
-    try {
-      const record = JSON.parse(match[1] ?? "") as UsageRecord;
-      if (
-        record &&
-        typeof record.sessionId === "string" &&
-        typeof record.vendor === "string" &&
-        typeof record.agentId === "string" &&
-        typeof record.tokens === "number" &&
-        typeof record.recordedAt === "string"
-      ) {
-        records.push(record);
-      }
-    } catch {
-      // skip malformed blocks -- file may be partially written
-    }
-  }
-
-  return records;
-}
-
-function ensureMemoriesDir(): void {
-  if (!existsSync(MEMORIES_BASE)) {
-    mkdirSync(MEMORIES_BASE, { recursive: true });
-  }
-}
-
-function readFileContent(filePath: string): string {
-  try {
-    return readFileSync(filePath, "utf-8");
-  } catch {
-    return "";
-  }
-}
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Config loading — same pattern as runtime-dispatch.ts
@@ -221,22 +166,11 @@ export function recordUsage(
   sessionId: string,
   record: Omit<UsageRecord, "sessionId" | "recordedAt">,
 ): void {
-  ensureMemoriesDir();
-
-  const fullRecord: UsageRecord = {
+  usageStore.append(sessionId, {
     ...record,
     sessionId,
     recordedAt: new Date().toISOString(),
-  };
-
-  const filePath = sessionCostFilePath(sessionId);
-  const block = serializeRecord(fullRecord);
-
-  if (!existsSync(filePath)) {
-    appendFileSync(filePath, buildFrontmatter(sessionId) + block, "utf-8");
-  } else {
-    appendFileSync(filePath, block, "utf-8");
-  }
+  });
 }
 
 /**
@@ -244,10 +178,7 @@ export function recordUsage(
  * Partial records (due to concurrent writes) are silently skipped.
  */
 export function loadSessionUsage(sessionId: string): UsageRecord[] {
-  const filePath = sessionCostFilePath(sessionId);
-  const content = readFileContent(filePath);
-  if (!content) return [];
-  return parseRecords(content);
+  return usageStore.load(sessionId);
 }
 
 /**
@@ -302,7 +233,7 @@ export function listAllSessionUsage(
     if (!entry.startsWith("session-cost-") || !entry.endsWith(".md")) continue;
     const content = readFileContent(path.join(baseDir, entry));
     if (!content) continue;
-    all.push(...parseRecords(content));
+    all.push(...usageStore.parse(content));
   }
   return all;
 }
