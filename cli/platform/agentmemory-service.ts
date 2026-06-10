@@ -1,31 +1,42 @@
-import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 import type {
-  MemoryCommandStatus,
-  MemoryServiceCommand,
-  MemoryServiceCommandPlanOptions,
-  MemoryServiceCommandResult,
-  MemoryServiceCommandRunOptions,
   MemoryServiceOptions,
   MemoryServicePresence,
   MemoryServiceResult,
   MemoryServiceUninstallOptions,
 } from "../types/memory.js";
+import {
+  defaultServiceCommandRunner,
+  formatServiceCommand,
+  runServiceCommands,
+  serviceCommands,
+} from "./agentmemory/service-commands.js";
+import {
+  agentMemoryServicePath,
+  renderLaunchdService,
+  renderSystemdService,
+  renderWindowsTaskXml,
+} from "./agentmemory/service-files.js";
 
 /**
- * AgentMemory daemon service generator (D43).
+ * AgentMemory daemon service orchestration (D43).
  *
- * Owns the launchd plist / systemd user unit rendering, service-file path
- * resolution, and the activation commands run on install/uninstall. Extracted
- * from `commands/memory/memory.ts` so the platform concern lives in one place
- * (design doc 013, "Files to Create: cli/platform/agentmemory-service.ts").
+ * Facade over `platform/agentmemory/`: service-file rendering lives in
+ * `service-files.ts`, activation command plans in `service-commands.ts`;
+ * this module owns presence checks and the install/uninstall flows.
+ * Extracted from `commands/memory/memory.ts` so the platform concern lives
+ * in one place (design doc 013).
  */
 
+export {
+  defaultServiceCommandRunner,
+  WINDOWS_TASK_NAME,
+} from "./agentmemory/service-commands.js";
+export { LAUNCHD_AGENTMEMORY_LABEL } from "./agentmemory/service-files.js";
+
 export const DEFAULT_AGENTMEMORY_PORT = 3111;
-export const LAUNCHD_AGENTMEMORY_LABEL = "dev.oma.agentmemory";
-export const WINDOWS_TASK_NAME = "OMA AgentMemory";
 
 export function parsePositivePort(
   value: number | string | undefined,
@@ -36,62 +47,6 @@ export function parsePositivePort(
     throw new Error(`invalid AgentMemory port: ${value}`);
   }
   return port;
-}
-
-export function defaultServiceCommandRunner(
-  command: MemoryServiceCommand,
-): MemoryCommandStatus {
-  const result = spawnSync(command.bin, command.args, {
-    encoding: "utf-8",
-    stdio: "pipe",
-    timeout: 10000,
-  });
-  return {
-    status: result.status,
-    error: result.error?.message ?? result.stderr?.trim() ?? undefined,
-  };
-}
-
-function servicePathEnvironment(homeDir: string): string {
-  return [
-    join(homeDir, ".bun", "bin"),
-    join(homeDir, ".local", "bin"),
-    "/opt/homebrew/bin",
-    "/usr/local/bin",
-    "/usr/bin",
-    "/bin",
-    "/usr/sbin",
-    "/sbin",
-  ].join(":");
-}
-
-function agentMemoryServicePath(
-  homeDir: string,
-  platform: NodeJS.Platform,
-): string | undefined {
-  if (platform === "darwin") {
-    return join(
-      homeDir,
-      "Library",
-      "LaunchAgents",
-      "dev.oma.agentmemory.plist",
-    );
-  }
-  if (platform === "linux") {
-    return join(
-      homeDir,
-      ".config",
-      "systemd",
-      "user",
-      "oma-agentmemory.service",
-    );
-  }
-  if (platform === "win32") {
-    // The scheduled-task XML registered with schtasks; the task itself is named
-    // by WINDOWS_TASK_NAME.
-    return join(homeDir, ".agentmemory", "oma-agentmemory.task.xml");
-  }
-  return undefined;
 }
 
 export function getAgentMemoryServicePresence(
@@ -106,217 +61,6 @@ export function getAgentMemoryServicePresence(
     servicePath,
     installed: servicePath ? existsSync(servicePath) : false,
   };
-}
-
-function agentMemoryDataHome(homeDir: string): string {
-  return join(homeDir, ".agentmemory");
-}
-
-function renderLaunchdService(args: { homeDir: string; port: number }): string {
-  // AgentMemory's iii-engine writes its store to a cwd-relative `./data/`, so
-  // pin WorkingDirectory to the config home (launchd otherwise defaults to `/`).
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key>
-  <string>${LAUNCHD_AGENTMEMORY_LABEL}</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>/usr/bin/env</string>
-    <string>agentmemory</string>
-  </array>
-  <key>WorkingDirectory</key>
-  <string>${agentMemoryDataHome(args.homeDir)}</string>
-  <key>EnvironmentVariables</key>
-  <dict>
-    <key>PATH</key>
-    <string>${servicePathEnvironment(args.homeDir)}</string>
-    <key>III_REST_PORT</key>
-    <string>${args.port}</string>
-  </dict>
-  <key>RunAtLoad</key>
-  <true/>
-  <key>KeepAlive</key>
-  <true/>
-  <key>StandardOutPath</key>
-  <string>/tmp/oma-agentmemory.out.log</string>
-  <key>StandardErrorPath</key>
-  <string>/tmp/oma-agentmemory.err.log</string>
-</dict>
-</plist>
-`;
-}
-
-function renderSystemdService(args: { homeDir: string; port: number }): string {
-  // WorkingDirectory pins AgentMemory's cwd-relative `./data/` store.
-  return `[Unit]
-Description=OMA AgentMemory daemon
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=${agentMemoryDataHome(args.homeDir)}
-Environment=PATH=${servicePathEnvironment(args.homeDir)}
-Environment=III_REST_PORT=${args.port}
-ExecStart=/usr/bin/env agentmemory
-Restart=on-failure
-RestartSec=2
-
-[Install]
-WantedBy=default.target
-`;
-}
-
-// Windows Task Scheduler definition. Task Scheduler has no per-task env block,
-// so III_REST_PORT is set inline via cmd; WorkingDirectory pins the cwd-relative
-// ./data store to the AgentMemory home, and MultipleInstancesPolicy=IgnoreNew
-// prevents the overlapping-engine race that produces 404s.
-function renderWindowsTaskXml(args: { homeDir: string; port: number }): string {
-  const dataHome = agentMemoryDataHome(args.homeDir);
-  return `<?xml version="1.0" encoding="UTF-16"?>
-<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-  <RegistrationInfo>
-    <Description>OMA AgentMemory daemon</Description>
-  </RegistrationInfo>
-  <Triggers>
-    <LogonTrigger>
-      <Enabled>true</Enabled>
-    </LogonTrigger>
-  </Triggers>
-  <Principals>
-    <Principal id="Author">
-      <LogonType>InteractiveToken</LogonType>
-      <RunLevel>LeastPrivilege</RunLevel>
-    </Principal>
-  </Principals>
-  <Settings>
-    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-    <StartWhenAvailable>true</StartWhenAvailable>
-    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
-    <RestartOnFailure>
-      <Interval>PT10S</Interval>
-      <Count>3</Count>
-    </RestartOnFailure>
-  </Settings>
-  <Actions Context="Author">
-    <Exec>
-      <Command>cmd</Command>
-      <Arguments>/c set "III_REST_PORT=${args.port}" &amp;&amp; agentmemory</Arguments>
-      <WorkingDirectory>${dataHome}</WorkingDirectory>
-    </Exec>
-  </Actions>
-</Task>
-`;
-}
-
-function serviceDomain(): string {
-  const uid = typeof process.getuid === "function" ? process.getuid() : 0;
-  return `gui/${uid}`;
-}
-
-function serviceCommands(
-  args: MemoryServiceCommandPlanOptions,
-): MemoryServiceCommand[] {
-  if (args.platform === "darwin") {
-    const domain = serviceDomain();
-    const serviceId = `${domain}/${LAUNCHD_AGENTMEMORY_LABEL}`;
-    return args.action === "install"
-      ? [
-          {
-            bin: "launchctl",
-            args: ["bootout", domain, args.servicePath],
-            optional: true,
-          },
-          { bin: "launchctl", args: ["bootstrap", domain, args.servicePath] },
-          { bin: "launchctl", args: ["enable", serviceId] },
-          { bin: "launchctl", args: ["kickstart", "-k", serviceId] },
-        ]
-      : [
-          { bin: "launchctl", args: ["disable", serviceId], optional: true },
-          {
-            bin: "launchctl",
-            args: ["bootout", domain, args.servicePath],
-            optional: true,
-          },
-        ];
-  }
-
-  if (args.platform === "linux") {
-    return args.action === "install"
-      ? [
-          { bin: "systemctl", args: ["--user", "daemon-reload"] },
-          {
-            bin: "systemctl",
-            args: ["--user", "enable", "--now", "oma-agentmemory.service"],
-          },
-        ]
-      : [
-          {
-            bin: "systemctl",
-            args: ["--user", "disable", "--now", "oma-agentmemory.service"],
-            optional: true,
-          },
-          { bin: "systemctl", args: ["--user", "daemon-reload"] },
-        ];
-  }
-
-  if (args.platform === "win32") {
-    return args.action === "install"
-      ? [
-          {
-            bin: "schtasks",
-            args: [
-              "/create",
-              "/tn",
-              WINDOWS_TASK_NAME,
-              "/xml",
-              args.servicePath,
-              "/f",
-            ],
-          },
-          {
-            bin: "schtasks",
-            args: ["/run", "/tn", WINDOWS_TASK_NAME],
-          },
-        ]
-      : [
-          {
-            bin: "schtasks",
-            args: ["/end", "/tn", WINDOWS_TASK_NAME],
-            optional: true,
-          },
-          {
-            bin: "schtasks",
-            args: ["/delete", "/tn", WINDOWS_TASK_NAME, "/f"],
-            optional: true,
-          },
-        ];
-  }
-
-  return [];
-}
-
-function formatServiceCommand(command: MemoryServiceCommand): string {
-  return [command.bin, ...command.args].join(" ");
-}
-
-function runServiceCommands(
-  args: MemoryServiceCommandRunOptions,
-): MemoryServiceCommandResult {
-  for (const command of args.commands) {
-    const result = args.runner(command);
-    if (result.status === 0 || command.optional) continue;
-    return {
-      activated: false,
-      commandExitCode: result.status,
-      commandError: result.error,
-    };
-  }
-
-  return { activated: true };
 }
 
 export function installAgentMemoryService(
