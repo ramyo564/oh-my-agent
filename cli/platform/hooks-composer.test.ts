@@ -95,8 +95,8 @@ describe("Codex hook variant contract", () => {
       expect(promptEntry.hooks[0].command).toBe(
         "'.codex/hooks/oma-hook.sh' --vendor 'codex' --event 'UserPromptSubmit'",
       );
-      // Timeout = sum of handler timeouts (5+5+3=13) + 5 margin = 18.
-      expect(promptEntry.hooks[0].timeout).toBe(18);
+      // Timeout = sum of handler timeouts (5+5+3+3=16) + 5 margin = 21.
+      expect(promptEntry.hooks[0].timeout).toBe(21);
 
       // PreToolUse — one entry with matcher, command includes --matcher Bash.
       expect(hooksJson.hooks.PreToolUse[0]).toMatchObject({

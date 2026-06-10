@@ -9,6 +9,7 @@ import {
 } from "../../../.agents/hooks/core/hook-output.js";
 import * as keywordDetector from "../../../.agents/hooks/core/keyword-detector.js";
 import * as persistentMode from "../../../.agents/hooks/core/persistent-mode.js";
+import * as serenaPrimer from "../../../.agents/hooks/core/serena-primer.js";
 import * as skillInjector from "../../../.agents/hooks/core/skill-injector.js";
 import * as stateBoundary from "../../../.agents/hooks/core/state-boundary.js";
 import * as testFilter from "../../../.agents/hooks/core/test-filter.js";
@@ -62,6 +63,7 @@ type RunFn = (
 const HANDLER_REGISTRY: Readonly<Record<string, RunFn>> = {
   "keyword-detector": keywordDetector.run,
   "skill-injector": skillInjector.run,
+  "serena-primer": serenaPrimer.run,
   "state-boundary": stateBoundary.run,
   "test-filter": testFilter.run,
   "persistent-mode": persistentMode.run,

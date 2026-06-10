@@ -28,6 +28,7 @@ describe("hook compatibility probe", () => {
         "keyword-detector.ts",
         "state-boundary.ts",
         "skill-injector.ts",
+        "serena-primer.ts",
       ]);
       expect(result.status, `${result.vendor} status`).toBe("verified");
       expect(result.notes).toEqual([]);
