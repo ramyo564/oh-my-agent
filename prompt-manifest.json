@@ -1,7 +1,7 @@
 {
   "name": "oh-my-agent",
   "version": "8.51.1",
-  "releaseDate": "2026-06-10T01:19:01.914Z",
+  "releaseDate": "2026-06-10T01:24:05.518Z",
   "repository": "https://github.com/first-fluke/oh-my-agent",
   "files": [
     {
@@ -190,6 +190,11 @@
       "size": 10844
     },
     {
+      "path": ".agents/hooks/core/serena-primer.ts",
+      "sha256": "7b80af01eadca780966939deb1c678f9a03dc482d6f5dfd6b84f2b1e862e1b31",
+      "size": 9682
+    },
+    {
       "path": ".agents/hooks/core/skill-injector.ts",
       "sha256": "82fb9b3af2ab361a92092128fa9696a7fe4e6cfb4e7c8e6d2244f45fe86dc757",
       "size": 19432
@@ -231,38 +236,38 @@
     },
     {
       "path": ".agents/hooks/variants/antigravity.json",
-      "sha256": "1903c5bf8fc2fb1d93531f1a14e34c3e1bd8da00f6022919d5aeb48d25c8eef9",
-      "size": 766
+      "sha256": "3773d025833610e5d6e29c06630f343c762be566953a3faa6f6e81350cc022e8",
+      "size": 840
     },
     {
       "path": ".agents/hooks/variants/claude.json",
-      "sha256": "7415cc1b090912e639b3eb5d97ac16daa019c89c92c4b9f13461d0f098f90323",
-      "size": 879
+      "sha256": "cb07afdf1e087284ef84e498f930b7de1f18e09b6b0e1b3e5ec3f95e5f00562c",
+      "size": 953
     },
     {
       "path": ".agents/hooks/variants/codex.json",
-      "sha256": "d26230c9f5990f1eb74231d3bea3f506a46dccaa92b6758deafeef6fd3735c61",
-      "size": 763
+      "sha256": "63aac728d710d603269ecb5bc94d0dc576d9c945ec4e229986ed5254de5aa958",
+      "size": 837
     },
     {
       "path": ".agents/hooks/variants/commandcode.json",
-      "sha256": "adae182a3ad74f432d0cd5d2fe4235563a669ba3008b6e8ca7876757fcc422fc",
-      "size": 658
+      "sha256": "f65c980df0b75fdccff2f83aaf6ca8b44bdd73ecdd9a8104c9a20f2c7bab2afd",
+      "size": 732
     },
     {
       "path": ".agents/hooks/variants/cursor.json",
-      "sha256": "41b48f9533bd16997ac31648c7e289edf004d72fdf81f0ef89b4c56e97ad52cf",
-      "size": 756
+      "sha256": "d27bf27a76dcd4c5bf8a47c717f8b995b8c965ce69c419abcfb15f74fa5ef795",
+      "size": 904
     },
     {
       "path": ".agents/hooks/variants/gemini.json",
-      "sha256": "52318f3dffafae0c8b149aa1207ef8bd446a859e8f835939db0b10a195218c9f",
-      "size": 1085
+      "sha256": "7a4c7f2b4a3bf3854c9bc21e198abeca8ecabbe2bab60a23acd68a376ca59e7f",
+      "size": 1186
     },
     {
       "path": ".agents/hooks/variants/grok.json",
-      "sha256": "5970dc503db7d6764d13e3b9342fcd932acd7604d2ef289ee9400fb1ad7032f9",
-      "size": 672
+      "sha256": "c91e9003609009d264f850b6ff5949423786c4be5e9e345bfd73d19dc3a708a1",
+      "size": 746
     },
     {
       "path": ".agents/hooks/variants/hook-variant.schema.json",
@@ -271,8 +276,8 @@
     },
     {
       "path": ".agents/hooks/variants/kiro.json",
-      "sha256": "15de7c15a8484e06bcd7376713e729063238b69287d40b3690441d022ffe7438",
-      "size": 641
+      "sha256": "921ae2f9515a047d6ac800a21047b46c6ccb079584f75843a9f8059249e46020",
+      "size": 715
     },
     {
       "path": ".agents/hooks/variants/pi/README.md",
@@ -286,8 +291,8 @@
     },
     {
       "path": ".agents/hooks/variants/qwen.json",
-      "sha256": "32386120663e157472eec8debc99af3187b614d5d061b672189e5c1e1591bea8",
-      "size": 719
+      "sha256": "1f022cc5d0bebae63a9ba3b484fa1dc3d630ec11a88d054f09da1a948bcac86a",
+      "size": 793
     },
     {
       "path": ".agents/mcp.json",
@@ -2056,6 +2061,6 @@
   "metadata": {
     "skillCount": 31,
     "workflowCount": 22,
-    "totalFiles": 409
+    "totalFiles": 410
   }
 }
