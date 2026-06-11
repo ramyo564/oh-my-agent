@@ -2,10 +2,12 @@
  * Antigravity CLI (agy) wiring. Two surfaces, two locations (per the official
  * contract at antigravity.google/docs/hooks, cross-checked against the binary):
  *
- *   1. HOOKS → a `hooks.json` in agy's customization directory. agy auto-loads
- *      it from the workspace root `.agents/` (or `~/.gemini/config/`). We write
- *      the project's `<workspace>/.agents/hooks.json`. The schema is a top-level
- *      map of hook NAME → event config:
+ *   1. HOOKS → a `hooks.json` in any of agy's customization directories. agy
+ *      auto-loads it from the workspace root `.agents/`, `~/.gemini/config/`,
+ *      AND its app-data dir `~/.gemini/antigravity-cli/` (all three verified
+ *      via agy load logs, 2026-06-11; the /hooks UI registers into the last
+ *      one). We write the project's `<workspace>/.agents/hooks.json`. The
+ *      schema is a top-level map of hook NAME → event config:
  *        - lifecycle events (PreInvocation / PostInvocation / Stop): an array of
  *          handler objects directly (matcher ignored)
  *        - tool events (PreToolUse / PostToolUse): an array of
@@ -150,6 +152,40 @@ function hookName(hook: string): string {
 
 type AgyHooksDoc = Record<string, Record<string, unknown[]>>;
 
+/** oma-managed entries in an agy hooks.json are namespaced `oma-*`. */
+function isOmaHookName(name: string): boolean {
+  return name.startsWith("oma-");
+}
+
+function readJsonRecord(path: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf-8"));
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Merge the regenerated oma hook entries into an existing agy hooks.json.
+ * User-registered hooks (any name without the `oma-` prefix — e.g. ones added
+ * by hand or by agy's own /hooks UI) are preserved verbatim; stale `oma-*`
+ * entries are swept and replaced by the fresh doc.
+ */
+function mergeAgyHooksDoc(
+  existing: Record<string, unknown> | null,
+  fresh: AgyHooksDoc,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {};
+  for (const [name, spec] of Object.entries(existing ?? {})) {
+    if (!isOmaHookName(name)) merged[name] = spec;
+  }
+  return { ...merged, ...fresh };
+}
+
 /**
  * Build agy's `hooks.json` document: a top-level map of hook name → event
  * config. Each OMA core hook gets its own named entry; commands point at the
@@ -240,12 +276,20 @@ export function installAntigravityHud(
 
   // Project hooks.json — agy auto-loads it from the workspace `.agents/` root.
   // Commands point at the project's own core hooks (absolute, cwd-independent).
+  // MERGE, don't overwrite: the file is shared with user-registered hooks
+  // (added by hand or via agy's /hooks UI) — only `oma-*` entries are ours.
   const hooksJsonPath = join(sourceDir, PROJECT_HOOKS_JSON);
   const coreHooksDir = join(sourceDir, PROJECT_CORE_HOOKS);
   let writtenHooksJson: string | undefined;
   if (existsSync(coreHooksDir)) {
     mkdirSync(join(sourceDir, ".agents"), { recursive: true });
-    safeWriteJson(hooksJsonPath, buildAgyHooksDoc(coreHooksDir, variant));
+    safeWriteJson(
+      hooksJsonPath,
+      mergeAgyHooksDoc(
+        readJsonRecord(hooksJsonPath),
+        buildAgyHooksDoc(coreHooksDir, variant),
+      ),
+    );
     writtenHooksJson = hooksJsonPath;
   }
 
@@ -273,13 +317,22 @@ export function installAntigravityHud(
   }
   safeWriteJson(settingsPath, settings);
 
-  // Remove the stale HOME hooks.json written by earlier (incorrect) installs —
-  // agy never loaded it from there.
+  // The HOME `~/.gemini/antigravity-cli/hooks.json` is NOT oma's to delete:
+  // agy's /hooks registration UI writes user hooks there AND the loader reads
+  // it (verified empirically 2026-06-11: an agy session in a workspace with no
+  // `.agents/hooks.json` logs `loaded 1 named hooks from 1 hooks.json file(s)`
+  // and executes the hook from this file). Remove it ONLY when it contains
+  // nothing but oma's earlier (incorrect) install artifacts.
   if (existsSync(staleHooksJson)) {
-    try {
-      unlinkSync(staleHooksJson);
-    } catch {
-      // best-effort cleanup
+    const parsed = readJsonRecord(staleHooksJson);
+    const onlyOmaEntries =
+      parsed !== null && Object.keys(parsed).every(isOmaHookName);
+    if (onlyOmaEntries) {
+      try {
+        unlinkSync(staleHooksJson);
+      } catch {
+        // best-effort cleanup
+      }
     }
   }
 

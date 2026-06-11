@@ -351,4 +351,92 @@ describe("installAntigravityHud", () => {
     installAntigravityHud("/repo");
     expect(snapshot).toBe(firstSnapshot);
   });
+
+  describe("user-registered hooks are never destroyed", () => {
+    const STALE_HOME_HOOKS = join(AGY_DIR, "hooks.json");
+
+    function mockFsWith(opts: {
+      projectHooksJson?: string;
+      homeHooksJson?: string;
+    }) {
+      (fs.existsSync as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+        (p: string) => {
+          const norm = p.replace(/\\/g, "/");
+          if (norm.endsWith(".gemini/antigravity-cli")) return true;
+          if (norm.includes(".agents/hooks/core")) return true;
+          if (norm.includes(".agents/hooks/variants/antigravity.json"))
+            return true;
+          if (norm === STALE_HOME_HOOKS)
+            return opts.homeHooksJson !== undefined;
+          return false;
+        },
+      );
+      (
+        fs.readFileSync as unknown as ReturnType<typeof vi.fn>
+      ).mockImplementation((p: string) => {
+        const norm = String(p).replace(/\\/g, "/");
+        if (norm.includes(".agents/hooks/variants/antigravity.json"))
+          return variantJson;
+        if (norm === PROJECT_HOOKS_JSON && opts.projectHooksJson !== undefined)
+          return opts.projectHooksJson;
+        if (norm === STALE_HOME_HOOKS && opts.homeHooksJson !== undefined)
+          return opts.homeHooksJson;
+        return "{}";
+      });
+    }
+
+    function writtenProjectHooksDoc(): Record<string, unknown> {
+      const call = (
+        fs.writeFileSync as unknown as ReturnType<typeof vi.fn>
+      ).mock.calls.find(([p]) => p === PROJECT_HOOKS_JSON);
+      expect(call).toBeDefined();
+      return JSON.parse(call?.[1] as string);
+    }
+
+    it("merges into .agents/hooks.json — user hooks survive, stale oma-* swept", () => {
+      mockFsWith({
+        projectHooksJson: JSON.stringify({
+          "user-custom-hook": {
+            PreInvocation: [{ type: "command", command: "whoami" }],
+          },
+          "oma-removed-handler": { PreInvocation: [] },
+        }),
+      });
+
+      installAntigravityHud("/repo");
+
+      const doc = writtenProjectHooksDoc();
+      expect(doc["user-custom-hook"]).toEqual({
+        PreInvocation: [{ type: "command", command: "whoami" }],
+      });
+      expect(doc["oma-removed-handler"]).toBeUndefined();
+      expect(doc["oma-keyword-detector"]).toBeDefined();
+    });
+
+    it("leaves the HOME hooks.json alone when it holds user-registered hooks (agy /hooks UI writes there)", () => {
+      mockFsWith({
+        homeHooksJson: JSON.stringify({
+          "user-custom-hook": {
+            PreInvocation: [{ type: "command", command: "whoami" }],
+          },
+        }),
+      });
+
+      installAntigravityHud("/repo");
+
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+    });
+
+    it("removes the HOME hooks.json only when it contains nothing but oma-* artifacts", () => {
+      mockFsWith({
+        homeHooksJson: JSON.stringify({
+          "oma-keyword-detector": { PreInvocation: [] },
+        }),
+      });
+
+      installAntigravityHud("/repo");
+
+      expect(fs.unlinkSync).toHaveBeenCalledWith(STALE_HOME_HOOKS);
+    });
+  });
 });
