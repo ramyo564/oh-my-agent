@@ -1,6 +1,9 @@
 import { createServer, type Server } from "node:http";
 import { afterEach, describe, expect, it } from "vitest";
-import { recallFacts } from "../../.agents/hooks/core/agentmemory-client.ts";
+import {
+  parseSearchResults,
+  recallFacts,
+} from "../../.agents/hooks/core/agentmemory-client.ts";
 
 async function startServer(searchBody: unknown): Promise<{
   server: Server;
@@ -76,5 +79,87 @@ describe("hooks recallFacts", () => {
       { text: "Decision [x]: adopt recall.", source: "decision", score: 9.3 },
       { text: "fact a; fact b", source: "fact", score: 4.1 },
     ]);
+  });
+});
+
+describe("parseSearchResults recall TTL", () => {
+  const NOW = Date.parse("2026-06-13T00:00:00Z");
+  const body = (results: unknown[]) => JSON.stringify({ results });
+
+  afterEach(() => {
+    delete process.env.OMA_RECALL_MAX_AGE_DAYS;
+  });
+
+  it("drops facts older than the TTL while keeping fresh and undated ones", () => {
+    const facts = parseSearchResults(
+      body([
+        {
+          score: 8,
+          observation: {
+            narrative: "stale decision",
+            type: "decision",
+            timestamp: "2026-01-01T00:00:00Z", // ~5 months old → dropped
+          },
+        },
+        {
+          score: 8,
+          observation: {
+            narrative: "fresh decision",
+            type: "decision",
+            timestamp: "2026-06-10T00:00:00Z", // 3 days old → kept
+          },
+        },
+        {
+          score: 8,
+          observation: { narrative: "undated decision", type: "decision" }, // unknown age → kept
+        },
+      ]),
+      5,
+      NOW,
+    );
+    expect(facts.map((f) => f.text)).toEqual([
+      "fresh decision",
+      "undated decision",
+    ]);
+  });
+
+  it("disables TTL filtering when OMA_RECALL_MAX_AGE_DAYS is 0", () => {
+    process.env.OMA_RECALL_MAX_AGE_DAYS = "0";
+    const facts = parseSearchResults(
+      body([
+        {
+          score: 8,
+          observation: {
+            narrative: "ancient decision",
+            type: "decision",
+            timestamp: "2020-01-01T00:00:00Z",
+          },
+        },
+      ]),
+      5,
+      NOW,
+    );
+    expect(facts.map((f) => f.text)).toEqual(["ancient decision"]);
+  });
+
+  it("normalises epoch-seconds timestamps", () => {
+    const fiveMonthsAgoSec = Math.floor(
+      Date.parse("2026-01-01T00:00:00Z") / 1000,
+    );
+    const facts = parseSearchResults(
+      body([
+        {
+          score: 8,
+          observation: {
+            narrative: "stale epoch decision",
+            type: "decision",
+            timestamp: fiveMonthsAgoSec,
+          },
+        },
+      ]),
+      5,
+      NOW,
+    );
+    expect(facts).toEqual([]);
   });
 });
