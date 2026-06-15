@@ -140,7 +140,7 @@ oh-my-agent funciona com qualquer IDE ou CLI com IA que suporte carregamento de 
 | **Codex CLI** | Habilidades auto-carregadas | Requisições paralelas mediadas por modelo |
 | **Antigravity IDE** | Habilidades auto-carregadas | `oma agent:spawn` |
 | **Cursor** | Habilidades via integração `.cursor/` | Execução manual |
-| **OpenCode** | Carregamento de habilidades | Execução manual |
+| **OpenCode** | Habilidades + bridge de plugin in-process + subagentes gerados (`.opencode/agents/`) | `oma agent:spawn -m opencode` |
 
 A execução de agentes se adapta automaticamente a cada fornecedor via protocolo de detecção de vendor, que verifica marcadores específicos (ex: a ferramenta `Agent` para Claude Code, `apply_patch` para Codex CLI).
 

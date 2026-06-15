@@ -213,3 +213,101 @@ session:
 ```
 
 Chạy `oma doctor --profile` để xác nhận kết quả giải quyết, rồi khởi động workflow như bình thường.
+
+---
+
+## Dispatch qua OpenCode
+
+[OpenCode](https://opencode.ai) là một vendor thuộc lớp extension: giống như pi, nó
+không phải chủ sở hữu model mà là một CLI chạy các model từ catalog riêng của nó —
+provider `opencode` miễn phí, gói thuê bao chi phí thấp `opencode-go`, và gateway
+`opencode-zen`. oma tích hợp nó như một **vendor plugin in-process**: opencode tự
+nạp `.opencode/plugins/oma/` thay vì đăng ký hook trong file settings, và giải
+quyết persona của từng agent từ các file `.opencode/agents/<id>.md` được sinh ra.
+
+### Dispatch tường minh
+
+Định tuyến bất kỳ agent nào qua opencode bằng override `-m opencode`:
+
+```bash
+oma agent:spawn pm "Draft the rollout plan" <session> -m opencode
+```
+
+Lệnh này chạy `opencode run --agent pm --dir <workspace> "<prompt>"`. Prompt là
+một **tham số vị trí ở cuối** — flag `-p` của opencode có nghĩa là `--password`,
+chứ không phải prompt.
+
+### Model OpenCode theo từng agent
+
+Để định tuyến các agent cụ thể tới một model opencode, hãy đăng ký model dưới `models:`
+và tham chiếu nó từ `agents:`. Có hai yêu cầu cần tuân thủ (xem
+[Khai báo model slug inline](#inlining-model-slugs)):
+
+1. **Slug phải ở dạng `owner/model`.** Dùng slug `provider/model` của opencode làm
+   key trong registry — tên trần bị schema `agents.<id>.model` từ chối.
+2. **Spec phải đầy đủ** — `cli`, `cli_model`, `auth_hint`, và mọi boolean trong
+   `supports`. Một spec không đầy đủ sẽ không qua được validation và âm thầm
+   fallback về core registry (khi đó agent sẽ không định tuyến tới opencode).
+
+```yaml
+# .agents/oma-config.yaml
+language: en
+model_preset: claude          # heavier impl roles stay on Claude
+
+models:
+  opencode-go/deepseek-v4-flash:
+    cli: opencode
+    cli_model: opencode-go/deepseek-v4-flash
+    auth_hint: "OpenCode Go subscription — run: opencode auth login"
+    supports:
+      effort: null
+      apply_patch: false
+      task_budget: false
+      prompt_cache: false
+      computer_use: false
+      native_dispatch_from: [opencode]
+      api_only: false
+
+agents:
+  pm:      { model: opencode-go/deepseek-v4-flash }
+  qa:      { model: opencode-go/deepseek-v4-flash }
+  docs:    { model: opencode-go/deepseek-v4-flash }
+  explore: { model: opencode-go/deepseek-v4-flash }
+```
+
+Mỗi agent được định tuyến sẽ dispatch `opencode run -m opencode-go/deepseek-v4-flash
+--agent <id> --dir <workspace> "<prompt>"`. Đây là lựa chọn phù hợp cho các vai
+trò nhẹ, nhanh (pm, qa, docs, explore) trong khi các agent triển khai nặng hơn
+vẫn giữ trên Codex/Claude/v.v.
+
+### Kiểm tra một model slug
+
+Catalog của opencode bị giới hạn theo thuê bao và đăng nhập, nên oma **không**
+hardcode các slug model của opencode. Hãy kiểm tra một slug dựa trên catalog đã
+cài đặt của bạn:
+
+```bash
+oma model:probe opencode-go/deepseek-v4-flash --json   # accepted | rejected | auth_required
+opencode models opencode-go                            # list everything your plan exposes
+```
+
+`oma model:probe` báo `accepted` khi slug có trong danh sách của
+`opencode models`, `rejected` khi không có, và `auth_required` khi provider cần
+đăng nhập hoặc thuê bao.
+
+### Xác thực và file được sinh ra
+
+- **Xác thực:** `opencode auth login` lưu thông tin đăng nhập trong
+  `~/.local/share/opencode/auth.json`. `oma auth:status` / `oma doctor` báo cáo
+  trạng thái xác thực opencode bên cạnh các CLI khác (provider kiểm tra mặc định:
+  `opencode-go`).
+- **File được sinh ra:** `oma link` (hoặc `oma link opencode`) ghi một file persona
+  `.opencode/agents/<id>.md` cho mỗi agent cùng với cầu nối `.opencode/plugins/oma/`.
+  Chúng được sinh ra từ SSOT `.agents/` — không chỉnh sửa trực tiếp; hãy chạy lại
+  `oma link` để tái tạo.
+
+> **Lưu ý về workflow liên tục:** sự kiện `session.idle` của opencode (tương tự
+> nhất với hook `Stop` của Claude) chỉ mang tính thông báo và không thể chặn
+> phiên kết thúc. Do đó, các workflow liên tục (orchestrate / work / ultrawork)
+> chạy với **ngữ nghĩa Stop suy giảm** dưới opencode — phần củng cố workflow diễn
+> ra ở tin nhắn kế tiếp thay vì giữ phiên mở.

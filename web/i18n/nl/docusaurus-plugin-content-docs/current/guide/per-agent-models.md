@@ -213,3 +213,100 @@ session:
 ```
 
 Draai `oma doctor --profile` om de resolutie te bevestigen en start daarna een workflow zoals gebruikelijk.
+
+---
+
+## Dispatchen via OpenCode
+
+[OpenCode](https://opencode.ai) is een vendor van de extensie-klasse: net als pi is het
+geen modeleigenaar maar een CLI die modellen uit de eigen catalogus draait — de gratis
+`opencode`-provider, het goedkope `opencode-go`-abonnementsplan en de
+`opencode-zen`-gateway. oma integreert het als een **in-process plugin-vendor**:
+opencode laadt `.opencode/plugins/oma/` automatisch in plaats van hooks via een
+settings-bestand te registreren, en lost de persona van elke agent op uit gegenereerde
+`.opencode/agents/<id>.md`-bestanden.
+
+### Expliciete dispatch
+
+Route elke agent via opencode met de `-m opencode`-override:
+
+```bash
+oma agent:spawn pm "Draft the rollout plan" <session> -m opencode
+```
+
+Dit draait `opencode run --agent pm --dir <workspace> "<prompt>"`. De prompt is een
+**afsluitend positioneel argument** — de `-p`-vlag van opencode betekent `--password`, niet
+de prompt.
+
+### Per-agent OpenCode-modellen
+
+Om specifieke agents naar een opencode-model te routeren, registreer je het model onder `models:`
+en verwijs je ernaar vanuit `agents:`. Twee vereisten gelden (zie
+[Inline model slugs](#inlining-model-slugs)):
+
+1. **De slug moet de `owner/model`-vorm hebben.** Gebruik de opencode `provider/model`-slug
+   als registersleutel — kale namen worden afgewezen door het `agents.<id>.model`-schema.
+2. **De spec moet volledig zijn** — `cli`, `cli_model`, `auth_hint` en elke
+   `supports`-boolean. Een onvolledige spec faalt bij validatie en valt stilzwijgend
+   terug op het core-register (waardoor de agent niet naar opencode zou routeren).
+
+```yaml
+# .agents/oma-config.yaml
+language: en
+model_preset: claude          # heavier impl roles stay on Claude
+
+models:
+  opencode-go/deepseek-v4-flash:
+    cli: opencode
+    cli_model: opencode-go/deepseek-v4-flash
+    auth_hint: "OpenCode Go subscription — run: opencode auth login"
+    supports:
+      effort: null
+      apply_patch: false
+      task_budget: false
+      prompt_cache: false
+      computer_use: false
+      native_dispatch_from: [opencode]
+      api_only: false
+
+agents:
+  pm:      { model: opencode-go/deepseek-v4-flash }
+  qa:      { model: opencode-go/deepseek-v4-flash }
+  docs:    { model: opencode-go/deepseek-v4-flash }
+  explore: { model: opencode-go/deepseek-v4-flash }
+```
+
+Elke gerouteerde agent dispatcht `opencode run -m opencode-go/deepseek-v4-flash
+--agent <id> --dir <workspace> "<prompt>"`. Dit past goed bij lichtgewicht,
+snelle rollen (pm, qa, docs, explore), terwijl zwaardere implementatie-agents op
+Codex/Claude/etc. blijven.
+
+### Een model slug valideren
+
+De catalogus van opencode is afgeschermd per abonnement en login, dus oma hardcodet
+opencode-model slugs **niet**. Valideer er een tegen je geïnstalleerde catalogus:
+
+```bash
+oma model:probe opencode-go/deepseek-v4-flash --json   # accepted | rejected | auth_required
+opencode models opencode-go                            # list everything your plan exposes
+```
+
+`oma model:probe` rapporteert `accepted` wanneer de slug wordt vermeld door
+`opencode models`, `rejected` wanneer dat niet zo is, en `auth_required` wanneer de
+provider login of een abonnement vereist.
+
+### Auth en gegenereerde bestanden
+
+- **Auth:** `opencode auth login` slaat credentials op in
+  `~/.local/share/opencode/auth.json`. `oma auth:status` / `oma doctor` rapporteren
+  opencode-auth naast de andere CLI's (standaard provider-check: `opencode-go`).
+- **Gegenereerde bestanden:** `oma link` (of `oma link opencode`) schrijft één
+  `.opencode/agents/<id>.md`-persona per agent plus de `.opencode/plugins/oma/`-bridge.
+  Deze worden gegenereerd uit de `.agents/`-SSOT — bewerk ze niet
+  rechtstreeks; draai `oma link` opnieuw om ze te regenereren.
+
+> **Opmerking over persistente workflows:** het `session.idle`-event van opencode (de
+> dichtstbijzijnde analoog van de Claude `Stop`-hook) is alleen voor notificatie en kan
+> niet voorkomen dat de sessie eindigt. Persistente workflows (orchestrate / work / ultrawork)
+> draaien onder opencode daarom met **gedegradeerde Stop-semantiek** — workflowversterking
+> gebeurt bij het volgende bericht in plaats van door de sessie open te houden.

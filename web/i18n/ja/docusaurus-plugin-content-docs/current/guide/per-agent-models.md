@@ -213,3 +213,72 @@ session:
 ```
 
 `oma doctor --profile`を実行して解決結果を確認したうえで、通常通りワークフローを開始してください。
+
+---
+
+## OpenCodeを介したディスパッチ
+
+[OpenCode](https://opencode.ai)は拡張クラスのベンダーです。piと同様にモデルのオーナーではなく、自身のカタログからモデルを実行するCLIであり、無料の`opencode`プロバイダー、低コストの`opencode-go`サブスクリプションプラン、`opencode-zen`ゲートウェイを提供します。omaはこれを**インプロセスプラグインベンダー**として統合します。opencodeは設定ファイルのフックを登録する代わりに`.opencode/plugins/oma/`を自動ロードし、各エージェントのペルソナを生成済みの`.opencode/agents/<id>.md`ファイルから解決します。
+
+### 明示的なディスパッチ
+
+`-m opencode`オーバーライドで、任意のエージェントをopencode経由でルーティングします。
+
+```bash
+oma agent:spawn pm "Draft the rollout plan" <session> -m opencode
+```
+
+これは`opencode run --agent pm --dir <workspace> "<prompt>"`を実行します。プロンプトは**末尾の位置引数**です。opencodeの`-p`フラグはプロンプトではなく`--password`を意味します。
+
+### エージェントごとのOpenCodeモデル
+
+特定のエージェントをopencodeモデルへルーティングするには、`models:`の下にモデルを登録し、`agents:`から参照します。2つの要件が適用されます（[モデルslugのインライン定義](#inlining-model-slugs)を参照）。
+
+1. **slugは`owner/model`形式でなければなりません。** opencodeの`provider/model` slugをレジストリキーとして使用してください。素の名前は`agents.<id>.model`スキーマによって拒否されます。
+2. **仕様は完全でなければなりません。** `cli`、`cli_model`、`auth_hint`、およびすべての`supports`ブール値が必要です。不完全な仕様はバリデーションに失敗し、サイレントにコアレジストリへフォールバックします（そのためエージェントはopencodeへルーティングされません）。
+
+```yaml
+# .agents/oma-config.yaml
+language: en
+model_preset: claude          # heavier impl roles stay on Claude
+
+models:
+  opencode-go/deepseek-v4-flash:
+    cli: opencode
+    cli_model: opencode-go/deepseek-v4-flash
+    auth_hint: "OpenCode Go subscription — run: opencode auth login"
+    supports:
+      effort: null
+      apply_patch: false
+      task_budget: false
+      prompt_cache: false
+      computer_use: false
+      native_dispatch_from: [opencode]
+      api_only: false
+
+agents:
+  pm:      { model: opencode-go/deepseek-v4-flash }
+  qa:      { model: opencode-go/deepseek-v4-flash }
+  docs:    { model: opencode-go/deepseek-v4-flash }
+  explore: { model: opencode-go/deepseek-v4-flash }
+```
+
+ルーティングされた各エージェントは`opencode run -m opencode-go/deepseek-v4-flash --agent <id> --dir <workspace> "<prompt>"`をディスパッチします。これは軽量で高速なロール（pm、qa、docs、explore）に適しており、より重い実装エージェントはCodex/Claudeなどに残せます。
+
+### モデルslugの検証
+
+opencodeのカタログはサブスクリプションおよびログインによってゲートされるため、omaはopencodeのモデルslugをハードコード**しません**。インストール済みカタログに対して検証してください。
+
+```bash
+oma model:probe opencode-go/deepseek-v4-flash --json   # accepted | rejected | auth_required
+opencode models opencode-go                            # list everything your plan exposes
+```
+
+`oma model:probe`は、slugが`opencode models`によって列挙されている場合は`accepted`を、列挙されていない場合は`rejected`を、プロバイダーがログインまたはサブスクリプションを必要とする場合は`auth_required`を報告します。
+
+### 認証と生成ファイル
+
+- **認証：** `opencode auth login`は資格情報を`~/.local/share/opencode/auth.json`に保存します。`oma auth:status` / `oma doctor`は、他のCLIと並べてopencodeの認証を報告します（デフォルトのプロバイダーチェック：`opencode-go`）。
+- **生成ファイル：** `oma link`（または`oma link opencode`）は、エージェントごとに1つの`.opencode/agents/<id>.md`ペルソナと、`.opencode/plugins/oma/`ブリッジを書き出します。これらは`.agents/` SSOTから生成されるため、直接編集せず、`oma link`を再実行して再生成してください。
+
+> **永続ワークフローに関する注意：** opencodeの`session.idle`イベント（Claudeの`Stop`フックに最も近い対応物）は通知専用であり、セッションの終了をブロックできません。そのため、永続ワークフロー（orchestrate / work / ultrawork）はopencode下では**Stopセマンティクスが低下した状態**で動作します。ワークフローの補強は、セッションを開いたまま保持するのではなく、次のメッセージ時に行われます。

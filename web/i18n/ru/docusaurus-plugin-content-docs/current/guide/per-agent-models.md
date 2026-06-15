@@ -213,3 +213,104 @@ session:
 ```
 
 Запустите `oma doctor --profile`, чтобы убедиться в корректном разрешении конфигурации, а затем запускайте рабочий процесс как обычно.
+
+---
+
+## Диспетчеризация через OpenCode
+
+[OpenCode](https://opencode.ai) — вендор класса расширений: как и pi, он не является
+владельцем модели, а представляет собой CLI, запускающий модели из собственного
+каталога — бесплатный провайдер `opencode`, недорогой подписочный план
+`opencode-go` и шлюз `opencode-zen`. oma интегрирует его как **внутрипроцессного
+плагин-вендора**: opencode автоматически загружает `.opencode/plugins/oma/` вместо
+регистрации хуков через файл настроек и разрешает персону каждого агента из
+сгенерированных файлов `.opencode/agents/<id>.md`.
+
+### Явная диспетчеризация
+
+Направьте любого агента через opencode с помощью переопределения `-m opencode`:
+
+```bash
+oma agent:spawn pm "Draft the rollout plan" <session> -m opencode
+```
+
+Эта команда выполняет `opencode run --agent pm --dir <workspace> "<prompt>"`. Промпт
+передаётся **завершающим позиционным аргументом** — флаг `-p` в opencode означает
+`--password`, а не промпт.
+
+### Модели OpenCode для отдельных агентов
+
+Чтобы направить конкретных агентов на модель opencode, зарегистрируйте модель в
+разделе `models:` и сошлитесь на неё из `agents:`. Действуют два требования (см.
+[Инлайн-добавление слагов моделей](#inlining-model-slugs)):
+
+1. **Слаг должен быть в форме `owner/model`.** Используйте слаг opencode
+   `provider/model` в качестве ключа реестра — голые имена отклоняются схемой
+   `agents.<id>.model`.
+2. **Спецификация должна быть полной** — `cli`, `cli_model`, `auth_hint` и каждый
+   булев флаг `supports`. Неполная спецификация не проходит валидацию и без
+   уведомления откатывается к базовому реестру (то есть агент не будет направлен в
+   opencode).
+
+```yaml
+# .agents/oma-config.yaml
+language: en
+model_preset: claude          # heavier impl roles stay on Claude
+
+models:
+  opencode-go/deepseek-v4-flash:
+    cli: opencode
+    cli_model: opencode-go/deepseek-v4-flash
+    auth_hint: "OpenCode Go subscription — run: opencode auth login"
+    supports:
+      effort: null
+      apply_patch: false
+      task_budget: false
+      prompt_cache: false
+      computer_use: false
+      native_dispatch_from: [opencode]
+      api_only: false
+
+agents:
+  pm:      { model: opencode-go/deepseek-v4-flash }
+  qa:      { model: opencode-go/deepseek-v4-flash }
+  docs:    { model: opencode-go/deepseek-v4-flash }
+  explore: { model: opencode-go/deepseek-v4-flash }
+```
+
+Каждый направленный агент вызывает `opencode run -m opencode-go/deepseek-v4-flash
+--agent <id> --dir <workspace> "<prompt>"`. Это хорошо подходит для лёгких и
+быстрых ролей (pm, qa, docs, explore), тогда как более тяжёлые агенты реализации
+остаются на Codex/Claude/и т. д.
+
+### Валидация слага модели
+
+Каталог opencode защищён подпиской и логином, поэтому oma **не** жёстко прописывает
+слаги моделей opencode. Проверьте слаг по вашему установленному каталогу:
+
+```bash
+oma model:probe opencode-go/deepseek-v4-flash --json   # accepted | rejected | auth_required
+opencode models opencode-go                            # list everything your plan exposes
+```
+
+`oma model:probe` возвращает `accepted`, когда слаг присутствует в списке
+`opencode models`, `rejected` — когда его там нет, и `auth_required` — когда
+провайдеру требуется логин или подписка.
+
+### Аутентификация и сгенерированные файлы
+
+- **Аутентификация:** `opencode auth login` сохраняет учётные данные в
+  `~/.local/share/opencode/auth.json`. `oma auth:status` / `oma doctor` сообщают о
+  статусе аутентификации opencode наряду с другими CLI (провайдер для проверки по
+  умолчанию: `opencode-go`).
+- **Сгенерированные файлы:** `oma link` (или `oma link opencode`) записывает по
+  одной персоне `.opencode/agents/<id>.md` на каждого агента плюс мост
+  `.opencode/plugins/oma/`. Они генерируются из SSOT `.agents/` — не редактируйте их
+  напрямую; для повторной генерации запустите `oma link` ещё раз.
+
+> **Примечание о персистентных рабочих процессах:** событие `session.idle` в
+> opencode (его ближайший аналог хука `Stop` в Claude) предназначено только для
+> уведомлений и не может заблокировать завершение сессии. Поэтому персистентные
+> рабочие процессы (orchestrate / work / ultrawork) выполняются под opencode с
+> **ослабленной семантикой Stop** — подкрепление рабочего процесса происходит при
+> следующем сообщении, а не за счёт удержания сессии открытой.

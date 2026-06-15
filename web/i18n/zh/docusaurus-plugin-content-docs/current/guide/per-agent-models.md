@@ -213,3 +213,75 @@ session:
 ```
 
 运行 `oma doctor --profile` 确认解析结果，然后照常启动工作流。
+
+---
+
+## 通过 OpenCode 分发
+
+[OpenCode](https://opencode.ai) 是一类扩展型厂商：与 pi 类似，它本身并不拥有模型，而是一个运行自有目录中模型的 CLI——包括免费的 `opencode` provider、低成本的 `opencode-go` 订阅计划，以及 `opencode-zen` 网关。oma 将其作为**进程内插件厂商**集成：opencode 会自动加载 `.opencode/plugins/oma/`，而非注册基于设置文件的 hook，并从生成的 `.opencode/agents/<id>.md` 文件中解析每个智能体的 persona。
+
+### 显式分发
+
+使用 `-m opencode` 覆盖，可将任意智能体通过 opencode 路由：
+
+```bash
+oma agent:spawn pm "Draft the rollout plan" <session> -m opencode
+```
+
+这会运行 `opencode run --agent pm --dir <workspace> "<prompt>"`。提示词是一个**末尾位置参数**——opencode 的 `-p` 参数表示 `--password`，而非提示词。
+
+### 按智能体配置 OpenCode 模型
+
+要将特定智能体路由到某个 opencode 模型，需在 `models:` 下注册该模型，并在 `agents:` 中引用它。这里有两条要求（参见[内联模型 slug](#inlining-model-slugs)）：
+
+1. **slug 必须为 `owner/model` 形式。** 使用 opencode 的 `provider/model` slug 作为注册表键——裸名称会被 `agents.<id>.model` 模式拒绝。
+2. **spec 必须完整**——`cli`、`cli_model`、`auth_hint` 以及每一个 `supports` 布尔值。不完整的 spec 会校验失败并静默回退到核心注册表（这样该智能体就不会路由到 opencode）。
+
+```yaml
+# .agents/oma-config.yaml
+language: en
+model_preset: claude          # heavier impl roles stay on Claude
+
+models:
+  opencode-go/deepseek-v4-flash:
+    cli: opencode
+    cli_model: opencode-go/deepseek-v4-flash
+    auth_hint: "OpenCode Go subscription — run: opencode auth login"
+    supports:
+      effort: null
+      apply_patch: false
+      task_budget: false
+      prompt_cache: false
+      computer_use: false
+      native_dispatch_from: [opencode]
+      api_only: false
+
+agents:
+  pm:      { model: opencode-go/deepseek-v4-flash }
+  qa:      { model: opencode-go/deepseek-v4-flash }
+  docs:    { model: opencode-go/deepseek-v4-flash }
+  explore: { model: opencode-go/deepseek-v4-flash }
+```
+
+每个被路由的智能体都会分发 `opencode run -m opencode-go/deepseek-v4-flash
+--agent <id> --dir <workspace> "<prompt>"`。这非常适合轻量、快速的角色（pm、qa、docs、explore），而较重的实现类智能体则继续保留在 Codex/Claude 等之上。
+
+### 校验模型 slug
+
+opencode 的目录受订阅和登录限制，因此 oma **不会**硬编码 opencode 模型 slug。可针对你已安装的目录校验某个 slug：
+
+```bash
+oma model:probe opencode-go/deepseek-v4-flash --json   # accepted | rejected | auth_required
+opencode models opencode-go                            # list everything your plan exposes
+```
+
+当 slug 被 `opencode models` 列出时，`oma model:probe` 报告 `accepted`；未列出时报告 `rejected`；当 provider 需要登录或订阅时报告 `auth_required`。
+
+### 认证与生成的文件
+
+- **认证：** `opencode auth login` 会将凭据存储在
+  `~/.local/share/opencode/auth.json`。`oma auth:status` / `oma doctor` 会在其他 CLI 之外一并报告 opencode 的认证状态（默认 provider 检查：`opencode-go`）。
+- **生成的文件：** `oma link`（或 `oma link opencode`）会为每个智能体写入一个
+  `.opencode/agents/<id>.md` persona，外加 `.opencode/plugins/oma/` 桥接。这些文件由 `.agents/` SSOT 生成——请勿直接编辑；重新运行 `oma link` 即可重新生成。
+
+> **持久化工作流说明：** opencode 的 `session.idle` 事件（最接近 Claude `Stop` hook 的对应物）仅用于通知，无法阻止会话结束。因此在 opencode 下，持久化工作流（orchestrate / work / ultrawork）会以**降级的 Stop 语义**运行——工作流的强化会在下一条消息时发生，而非通过保持会话不结束来实现。

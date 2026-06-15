@@ -140,7 +140,7 @@ oh-my-agent werkt met elke AI-aangedreven IDE of CLI die skill/prompt-loading on
 | **Codex CLI** | Skills automatisch geladen | Model-gemedieerde parallelle verzoeken |
 | **Antigravity IDE** | Skills automatisch geladen | `oma agent:spawn` |
 | **Cursor** | Skills via `.cursor/`-integratie | Handmatige spawning |
-| **OpenCode** | Skills laden | Handmatige spawning |
+| **OpenCode** | Skills + in-process plugin-bridge + gegenereerde subagenten (`.opencode/agents/`) | `oma agent:spawn -m opencode` |
 
 Agent-spawning past zich automatisch aan elke leverancier aan via het leveranciersdetectieprotocol, dat controleert op leveranciersspecifieke markers (bijv. het `Agent`-tool voor Claude Code, `apply_patch` voor Codex CLI).
 

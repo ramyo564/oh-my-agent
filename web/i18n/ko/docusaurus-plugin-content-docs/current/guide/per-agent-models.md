@@ -213,3 +213,103 @@ session:
 ```
 
 `oma doctor --profile`로 해석 결과를 확인한 뒤, 평소처럼 워크플로우를 시작하시기 바랍니다.
+
+---
+
+## OpenCode를 통한 디스패치
+
+[OpenCode](https://opencode.ai)는 확장 계열 벤더입니다. pi와 마찬가지로 모델
+소유자가 아니라 자체 카탈로그의 모델을 실행하는 CLI입니다. 무료 `opencode`
+프로바이더, 저비용 `opencode-go` 구독 플랜, 그리고 `opencode-zen` 게이트웨이가
+여기에 포함됩니다. oma는 이를 **인프로세스 플러그인 벤더**로 통합합니다.
+opencode는 설정 파일 기반 훅을 등록하는 대신 `.opencode/plugins/oma/`를 자동으로
+로드하며, 생성된 `.opencode/agents/<id>.md` 파일에서 각 에이전트의 페르소나를
+해석합니다.
+
+### 명시적 디스패치
+
+`-m opencode` 오버라이드로 어떤 에이전트든 opencode를 통해 라우팅합니다.
+
+```bash
+oma agent:spawn pm "Draft the rollout plan" <session> -m opencode
+```
+
+이 명령은 `opencode run --agent pm --dir <workspace> "<prompt>"`를 실행합니다.
+프롬프트는 **마지막에 오는 위치 인자**입니다. opencode의 `-p` 플래그는
+프롬프트가 아니라 `--password`를 의미합니다.
+
+### 에이전트별 OpenCode 모델
+
+특정 에이전트를 opencode 모델로 라우팅하려면, 해당 모델을 `models:` 아래에
+등록하고 `agents:`에서 참조합니다. 두 가지 요건이 적용됩니다(자세한 내용은
+[모델 슬러그 인라인 등록](#inlining-model-slugs) 참고).
+
+1. **슬러그는 `owner/model` 형식이어야 합니다.** opencode의 `provider/model`
+   슬러그를 레지스트리 키로 사용합니다. 단순 이름은 `agents.<id>.model` 스키마에서
+   거부됩니다.
+2. **스펙은 완전해야 합니다.** `cli`, `cli_model`, `auth_hint`, 그리고 모든
+   `supports` 불리언이 필요합니다. 불완전한 스펙은 검증에 실패하고 조용히 코어
+   레지스트리로 폴백되므로(따라서 해당 에이전트는 opencode로 라우팅되지 않습니다).
+
+```yaml
+# .agents/oma-config.yaml
+language: en
+model_preset: claude          # heavier impl roles stay on Claude
+
+models:
+  opencode-go/deepseek-v4-flash:
+    cli: opencode
+    cli_model: opencode-go/deepseek-v4-flash
+    auth_hint: "OpenCode Go subscription — run: opencode auth login"
+    supports:
+      effort: null
+      apply_patch: false
+      task_budget: false
+      prompt_cache: false
+      computer_use: false
+      native_dispatch_from: [opencode]
+      api_only: false
+
+agents:
+  pm:      { model: opencode-go/deepseek-v4-flash }
+  qa:      { model: opencode-go/deepseek-v4-flash }
+  docs:    { model: opencode-go/deepseek-v4-flash }
+  explore: { model: opencode-go/deepseek-v4-flash }
+```
+
+라우팅된 각 에이전트는 `opencode run -m opencode-go/deepseek-v4-flash
+--agent <id> --dir <workspace> "<prompt>"`를 디스패치합니다. 이 구성은
+가볍고 빠른 역할(pm, qa, docs, explore)에 적합하며, 더 무거운 구현 에이전트는
+Codex/Claude 등에 그대로 둘 수 있습니다.
+
+### 모델 슬러그 검증
+
+opencode의 카탈로그는 구독 및 로그인으로 게이트되어 있어, oma는 opencode 모델
+슬러그를 하드코딩하지 **않습니다**. 설치된 카탈로그를 기준으로 슬러그를
+검증하시기 바랍니다.
+
+```bash
+oma model:probe opencode-go/deepseek-v4-flash --json   # accepted | rejected | auth_required
+opencode models opencode-go                            # list everything your plan exposes
+```
+
+`oma model:probe`는 슬러그가 `opencode models`에 나열되어 있으면 `accepted`,
+나열되어 있지 않으면 `rejected`, 프로바이더에 로그인이나 구독이 필요하면
+`auth_required`를 보고합니다.
+
+### 인증 및 생성된 파일
+
+- **인증:** `opencode auth login`은 자격 증명을
+  `~/.local/share/opencode/auth.json`에 저장합니다. `oma auth:status` /
+  `oma doctor`는 다른 CLI와 함께 opencode 인증 상태를 보고합니다(기본 프로바이더
+  확인 대상: `opencode-go`).
+- **생성된 파일:** `oma link`(또는 `oma link opencode`)는 에이전트마다
+  `.opencode/agents/<id>.md` 페르소나 하나와 `.opencode/plugins/oma/` 브릿지를
+  작성합니다. 이 파일들은 `.agents/` SSOT에서 생성되므로 직접 편집하지 마시고,
+  재생성하려면 `oma link`를 다시 실행하시기 바랍니다.
+
+> **지속적 워크플로우 참고:** opencode의 `session.idle` 이벤트(Claude의 `Stop`
+> 훅에 가장 가까운 대응물)는 알림 전용이며 세션 종료를 막을 수 없습니다. 따라서
+> 지속적 워크플로우(orchestrate / work / ultrawork)는 opencode에서 **저하된 Stop
+> 시맨틱**으로 동작합니다. 워크플로우 보강이 세션을 열어 둔 채 이루어지는 대신
+> 다음 메시지 시점에 일어납니다.
