@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.7.0](https://github.com/first-fluke/oh-my-agent/compare/cli-v9.6.0...cli-v9.7.0) (2026-06-16)
+
+
+### Features
+
+* **schedule:** add cross-vendor OS-level scheduler ([14eaa55](https://github.com/first-fluke/oh-my-agent/commit/14eaa550f8ad6b3fb2aaa1e6df1fc517e0dcfdc9))
+
 ## [9.6.0](https://github.com/first-fluke/oh-my-agent/compare/cli-v9.5.0...cli-v9.6.0) (2026-06-16)
 
 
