@@ -1,7 +1,7 @@
 {
   "name": "oh-my-agent",
   "version": "9.6.0",
-  "releaseDate": "2026-06-16T01:01:23.427Z",
+  "releaseDate": "2026-06-16T11:54:22.947Z",
   "repository": "https://github.com/first-fluke/oh-my-agent",
   "files": [
     {
@@ -201,8 +201,8 @@
     },
     {
       "path": ".agents/hooks/core/triggers.json",
-      "sha256": "5f2d42a50612d08a754cc179e414846649fb5bdb7ea6c949114756b0212f63ac",
-      "size": 84684
+      "sha256": "3591983a38aaad43d94780720253917f5d8201374e3e281af0f5c0fe47a5b87d",
+      "size": 84696
     },
     {
       "path": ".agents/hooks/core/types.ts",
@@ -383,6 +383,11 @@
       "path": ".agents/skills/_shared/core/api-contracts/README.md",
       "sha256": "92ef7427089a37133eb3c72ae6c987ef57e366eca9ad158b59bed9e5e22638ed",
       "size": 2102
+    },
+    {
+      "path": ".agents/skills/_shared/core/api-contracts/schedule-scheduler-port.md",
+      "sha256": "66bbce9e72f12eb03630cd51db683e3fc0a325604b4463c1056627917afd0813",
+      "size": 7306
     },
     {
       "path": ".agents/skills/_shared/core/api-contracts/template.md",
@@ -2065,6 +2070,11 @@
       "size": 5495
     },
     {
+      "path": ".agents/workflows/schedule.md",
+      "sha256": "b370c3ee0af766f7d850ab079ac89f011eac71dfaee98d78e7ae9e5c8a7541f0",
+      "size": 2866
+    },
+    {
       "path": ".agents/workflows/scm.md",
       "sha256": "6474d17d67f89a3a350068b88815ac52cd84ed1e00b6b56bbaccb8d9c08ab0dc",
       "size": 7392
@@ -2110,7 +2120,7 @@
   },
   "metadata": {
     "skillCount": 32,
-    "workflowCount": 22,
-    "totalFiles": 420
+    "workflowCount": 23,
+    "totalFiles": 422
   }
 }
