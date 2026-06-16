@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.14.1](https://github.com/first-fluke/oh-my-agent/compare/web-v3.14.0...web-v3.14.1) (2026-06-16)
+
+
+### Documentation
+
+* **cli:** document serena reaper commands and config ([605634c](https://github.com/first-fluke/oh-my-agent/commit/605634c6a1b3bb68f5e60862aa20ede64b132591))
+
 ## [3.14.0](https://github.com/first-fluke/oh-my-agent/compare/web-v3.13.1...web-v3.14.0) (2026-06-15)
 
 
