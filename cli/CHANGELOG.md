@@ -1,5 +1,17 @@
 # Changelog
 
+## [9.6.0](https://github.com/first-fluke/oh-my-agent/compare/cli-v9.5.0...cli-v9.6.0) (2026-06-16)
+
+
+### Features
+
+* **serena:** add memory reaper to reclaim idle language servers ([32dcc4f](https://github.com/first-fluke/oh-my-agent/commit/32dcc4f84c5e00f9488b2ea08de6cda5650e3414))
+
+
+### Documentation
+
+* **cli:** document serena reaper commands and config ([605634c](https://github.com/first-fluke/oh-my-agent/commit/605634c6a1b3bb68f5e60862aa20ede64b132591))
+
 ## [9.5.0](https://github.com/first-fluke/oh-my-agent/compare/cli-v9.4.0...cli-v9.5.0) (2026-06-15)
 
 
