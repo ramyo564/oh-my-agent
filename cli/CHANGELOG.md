@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.0.1](https://github.com/first-fluke/oh-my-agent/compare/cli-v10.0.0...cli-v10.0.1) (2026-06-18)
+
+
+### Documentation
+
+* **readme:** rewrite slash-command table as friendly one-liners ([212b3fa](https://github.com/first-fluke/oh-my-agent/commit/212b3faf01ac3aeeb63553d6527ab53a6f579bf5))
+* **rules:** add schedule to generated workflow table ([da94d06](https://github.com/first-fluke/oh-my-agent/commit/da94d06f4cf6ba54acf97841ca820cca021131bf))
+
 ## [10.0.0](https://github.com/first-fluke/oh-my-agent/compare/cli-v9.10.0...cli-v10.0.0) (2026-06-18)
 
 
