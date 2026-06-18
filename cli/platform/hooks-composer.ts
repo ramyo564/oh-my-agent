@@ -106,7 +106,7 @@ export function installHooksFromVariant(
 
     if (allHud) {
       // Hud-only event — keep the current bun path (T1-c: statusLine/hud stays
-      // on its current mechanism; gemini uses hud via events rather than statusLine).
+      // on its current mechanism).
       const hooks = configs.map((c) => ({
         name: deriveHookName(c.hook),
         type: "command",
