@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.2.1](https://github.com/first-fluke/oh-my-agent/compare/cli-v10.2.0...cli-v10.2.1) (2026-06-18)
+
+
+### Refactoring
+
+* **state:** emit L1 decisions via oma state:emit directly ([a4c2a40](https://github.com/first-fluke/oh-my-agent/commit/a4c2a40b289f7607afbb7338d5fa97415bf4b591))
+
 ## [10.2.0](https://github.com/first-fluke/oh-my-agent/compare/cli-v10.1.0...cli-v10.2.0) (2026-06-18)
 
 
