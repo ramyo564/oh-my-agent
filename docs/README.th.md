@@ -209,7 +209,7 @@ APM แจกแค่ skill เท่านั้น ส่วน workflow, rul
 
 ### โมเดลต่อเอเจนต์
 
-แต่ละเอเจนต์สามารถกำหนดโมเดลและ `effort` ของตัวเองผ่าน `.agents/oma-config.yaml` ได้ มี runtime profiles พร้อมใช้งาน: `antigravity`, `claude`, `codex`, `cursor`, `grok`, `mixed`, `qwen` ตรวจสอบ auth matrix ที่ resolve แล้วด้วย `oma doctor --profile` คู่มือฉบับเต็ม: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md)
+แต่ละเอเจนต์สามารถกำหนดโมเดลและ `effort` ของตัวเองผ่าน `.agents/oma-config.yaml` ได้ มี runtime profiles พร้อมใช้งาน: `antigravity`, `claude`, `codex`, `cursor`, `kiro`, `mixed`, `qwen` ตรวจสอบ auth matrix ที่ resolve แล้วด้วย `oma doctor --profile` คู่มือฉบับเต็ม: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md)
 
 ## ทำไมต้อง oh-my-agent?
 
@@ -222,7 +222,7 @@ APM แจกแค่ skill เท่านั้น ส่วน workflow, rul
   - `ralph` workflow — JUDGE อิสระตรวจสอบทุก criterion ซ้ำในแต่ละ iteration เพื่อจับ regression แบบเงียบ; cache สำหรับ test ที่ใช้เวลา >30 วินาที
   - Exploration Loop — หลังจาก retry 2 ครั้ง `orchestrate` จะ spawn variant ของ hypothesis แบบขนานและเก็บผลที่ได้คะแนนสูงสุด
   - Monorepo auto-routing — `detectWorkspace` อ่าน pnpm / nx / turbo / lerna และส่งแต่ละ agent ไปยัง workspace ของตัวเอง
-- **รองรับหลายผู้ให้บริการ (Multi-vendor)**: ผสมผสานการใช้ Claude, Codex, Cursor และ Qwen ตามประเภทของเอเจนต์
+- **รองรับหลายผู้ให้บริการ (Multi-vendor)**: ผสมผสานการใช้ Antigravity, Claude, Codex, Cursor, Kiro และ Qwen ตามประเภทของเอเจนต์
 - **ตรวจสอบได้ (Observable)**: มีหน้าจอ Dashboard ทั้งใน Terminal และ Web เพื่อดูสถานะแบบเรียลไทม์
 
 ## สถาปัตยกรรม (Architecture)

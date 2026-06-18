@@ -209,7 +209,7 @@ You: "做一个带用户认证的 TODO 应用"
 
 ### 按 agent 配置模型
 
-可在 `.agents/oma-config.yaml` 里为每个 agent 单独指定模型和 `effort`。内置 runtime profiles：`antigravity`、`claude`、`codex`、`cursor`、`grok`、`mixed`、`qwen`。用 `oma doctor --profile` 查看解析后的 auth 矩阵。完整指南：[web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md)。
+可在 `.agents/oma-config.yaml` 里为每个 agent 单独指定模型和 `effort`。内置 runtime profiles：`antigravity`、`claude`、`codex`、`cursor`、`kiro`、`mixed`、`qwen`。用 `oma doctor --profile` 查看解析后的 auth 矩阵。完整指南：[web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md)。
 
 ## 为什么选 oh-my-agent？
 
@@ -224,7 +224,7 @@ You: "做一个带用户认证的 TODO 应用"
   - `ralph` 工作流 — 独立的 JUDGE 每次迭代都重新校验所有 criterion，捕获静默回归；>30s 的重测有缓存
   - Exploration Loop — 重试 2 次后，`orchestrate` 并行 spawn 多个 hypothesis 变体并保留得分最高的
   - 单仓自动路由 — `detectWorkspace` 读取 pnpm / nx / turbo / lerna 并把每个 agent 路由到自己的 workspace
-- **多厂商**：按 agent 类型混用 Claude、Codex、Cursor、Qwen
+- **多厂商**：按 agent 类型混用 Antigravity、Claude、Codex、Cursor、Kiro、Qwen
 - **可观测**：终端和 Web 仪表盘实时监控
 
 ## 架构

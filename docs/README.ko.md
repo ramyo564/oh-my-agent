@@ -209,7 +209,7 @@ You: "사용자 인증이 있는 TODO 앱 만들어줘"
 
 ### 에이전트별 모델
 
-`.agents/oma-config.yaml`에서 각 에이전트마다 모델과 `effort`를 따로 지정할 수 있습니다. runtime profile이 기본 제공됩니다: `antigravity`, `claude`, `codex`, `cursor`, `grok`, `mixed`, `qwen`. `oma doctor --profile`로 해석된 auth 매트릭스를 확인하세요. 전체 가이드: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
+`.agents/oma-config.yaml`에서 각 에이전트마다 모델과 `effort`를 따로 지정할 수 있습니다. runtime profile이 기본 제공됩니다: `antigravity`, `claude`, `codex`, `cursor`, `kiro`, `mixed`, `qwen`. `oma doctor --profile`로 해석된 auth 매트릭스를 확인하세요. 전체 가이드: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
 
 ## 왜 oh-my-agent인가?
 
@@ -224,7 +224,7 @@ You: "사용자 인증이 있는 TODO 앱 만들어줘"
   - `ralph` 워크플로우 — 독립 JUDGE가 매 iteration마다 모든 criterion을 재검증해 silent regression을 잡습니다; 30초 초과 테스트 캐싱
   - Exploration Loop — 2회 retry 후 `orchestrate`가 hypothesis 변형을 병렬 spawn하고 최고 점수만 남깁니다
   - 모노레포 자동 라우팅 — `detectWorkspace`가 pnpm / nx / turbo / lerna를 읽어 각 에이전트를 자기 workspace로 보냅니다
-- **멀티 벤더**: 에이전트 유형별로 Claude, Codex, Cursor, Qwen을 섞어 쓸 수 있습니다
+- **멀티 벤더**: 에이전트 유형별로 Antigravity, Claude, Codex, Cursor, Kiro, Qwen을 섞어 쓸 수 있습니다
 - **가시성**: 터미널과 웹 대시보드로 실시간 모니터링이 가능합니다
 
 ## 아키텍처

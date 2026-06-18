@@ -209,7 +209,7 @@ Of gebruik slash commands voor gestructureerde workflows:
 
 ### Modellen per agent
 
-Elke agent kan via `.agents/oma-config.yaml` een eigen model en `effort` kiezen. Kant-en-klare runtime profiles: `antigravity`, `claude`, `codex`, `cursor`, `grok`, `mixed`, `qwen`. Bekijk de opgeloste auth-matrix met `oma doctor --profile`. Volledige gids: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
+Elke agent kan via `.agents/oma-config.yaml` een eigen model en `effort` kiezen. Kant-en-klare runtime profiles: `antigravity`, `claude`, `codex`, `cursor`, `kiro`, `mixed`, `qwen`. Bekijk de opgeloste auth-matrix met `oma doctor --profile`. Volledige gids: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
 
 ## Waarom oh-my-agent?
 
@@ -224,7 +224,7 @@ Elke agent kan via `.agents/oma-config.yaml` een eigen model en `effort` kiezen.
   - `ralph` workflow — onafhankelijke JUDGE her-verifieert elk criterion per iteratie om stille regressies te vangen; caching voor tests >30s
   - Exploration Loop — na 2 retries spawnt `orchestrate` hypothese-varianten parallel en houdt het hoogst scorende resultaat
   - Monorepo auto-routing — `detectWorkspace` leest pnpm / nx / turbo / lerna en routeert elke agent naar zijn workspace
-- **Multi-vendor**: mix Claude, Codex, Cursor en Qwen per agent-type
+- **Multi-vendor**: mix Antigravity, Claude, Codex, Cursor, Kiro en Qwen per agent-type
 - **Observeerbaar**: terminal- en webdashboards voor realtime monitoring
 
 ## Architectuur

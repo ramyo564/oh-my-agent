@@ -209,7 +209,7 @@ You: "ユーザー認証付きのTODOアプリを作って"
 
 ### エージェント別モデル
 
-`.agents/oma-config.yaml` で各エージェントに独自のモデルと `effort` を割り当てられます。プリセットは runtime profile: `antigravity`、`claude`、`codex`、`cursor`、`grok`、`mixed`、`qwen`。解決後の auth マトリクスは `oma doctor --profile` で確認できます。完全ガイド: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md)。
+`.agents/oma-config.yaml` で各エージェントに独自のモデルと `effort` を割り当てられます。プリセットは runtime profile: `antigravity`、`claude`、`codex`、`cursor`、`kiro`、`mixed`、`qwen`。解決後の auth マトリクスは `oma doctor --profile` で確認できます。完全ガイド: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md)。
 
 ## なぜ oh-my-agent？
 
@@ -224,7 +224,7 @@ You: "ユーザー認証付きのTODOアプリを作って"
   - `ralph` ワークフロー — 独立した JUDGE がイテレーションごとに全 criterion を再検証し silent regression を捕捉；30秒超のテストはキャッシュします
   - Exploration Loop — 2回リトライ後、`orchestrate` が hypothesis のバリアントを並列 spawn し最高スコアのみ残します
   - モノレポ自動ルーティング — `detectWorkspace` が pnpm / nx / turbo / lerna を読み取り、各エージェントを担当 workspace にルーティングします
-- **マルチベンダー**: エージェントタイプごとにClaude、Codex、Cursor、Qwenを混在可能
+- **マルチベンダー**: エージェントタイプごとにAntigravity、Claude、Codex、Cursor、Kiro、Qwenを混在可能
 - **可観測性**: ターミナルとWebダッシュボードでリアルタイムにモニタリング
 
 ## アーキテクチャ

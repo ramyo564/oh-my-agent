@@ -209,7 +209,7 @@ APM поставляет только скилы. Для workflow, правил,
 
 ### Модели по агенту
 
-Каждый агент может указывать собственную модель и `effort` через `.agents/oma-config.yaml`. Доступные runtime profiles: `antigravity`, `claude`, `codex`, `cursor`, `grok`, `mixed`, `qwen`. Проверьте итоговую auth-матрицу командой `oma doctor --profile`. Полное руководство: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
+Каждый агент может указывать собственную модель и `effort` через `.agents/oma-config.yaml`. Доступные runtime profiles: `antigravity`, `claude`, `codex`, `cursor`, `kiro`, `mixed`, `qwen`. Проверьте итоговую auth-матрицу командой `oma doctor --profile`. Полное руководство: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
 
 ## Почему oh-my-agent?
 
@@ -224,7 +224,7 @@ APM поставляет только скилы. Для workflow, правил,
   - workflow `ralph` — независимый JUDGE перепроверяет каждый criterion на каждой итерации, чтобы поймать тихие регрессии; кеширование для тестов >30с
   - Exploration Loop — после 2 retry `orchestrate` параллельно spawn'ит варианты гипотез и оставляет с лучшим скором
   - Авто-роутинг монорепо — `detectWorkspace` читает pnpm / nx / turbo / lerna и направляет каждого агента в его workspace
-- **Мультивендорный**: комбинируйте Claude, Codex, Cursor и Qwen для разных типов агентов
+- **Мультивендорный**: комбинируйте Antigravity, Claude, Codex, Cursor, Kiro и Qwen для разных типов агентов
 - **Наблюдаемый**: дашборды в терминале и в вебе для мониторинга в реальном времени
 
 ## Архитектура

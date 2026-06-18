@@ -209,7 +209,7 @@ Hoặc sử dụng slash command cho các workflow có cấu trúc:
 
 ### Model theo từng agent
 
-Mỗi agent có thể trỏ tới model và `effort` riêng thông qua `.agents/oma-config.yaml`. Có sẵn các runtime profiles: `antigravity`, `claude`, `codex`, `cursor`, `grok`, `mixed`, `qwen`. Kiểm tra ma trận auth đã resolve bằng `oma doctor --profile`. Hướng dẫn đầy đủ: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
+Mỗi agent có thể trỏ tới model và `effort` riêng thông qua `.agents/oma-config.yaml`. Có sẵn các runtime profiles: `antigravity`, `claude`, `codex`, `cursor`, `kiro`, `mixed`, `qwen`. Kiểm tra ma trận auth đã resolve bằng `oma doctor --profile`. Hướng dẫn đầy đủ: [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
 
 ## Tại sao chọn oh-my-agent?
 
@@ -224,7 +224,7 @@ Mỗi agent có thể trỏ tới model và `effort` riêng thông qua `.agents/
   - workflow `ralph` — JUDGE độc lập tái xác minh mọi criterion mỗi iteration để bắt regression im lặng; cache cho test >30s
   - Exploration Loop — sau 2 lần retry, `orchestrate` spawn các biến thể hypothesis song song và giữ kết quả điểm cao nhất
   - Auto-routing monorepo — `detectWorkspace` đọc pnpm / nx / turbo / lerna và route mỗi agent đến workspace của nó
-- **Đa nhà cung cấp**: kết hợp Claude, Codex, Cursor và Qwen theo loại agent
+- **Đa nhà cung cấp**: kết hợp Antigravity, Claude, Codex, Cursor, Kiro và Qwen theo loại agent
 - **Có thể quan sát**: dashboard terminal và web để giám sát thời gian thực
 
 ## Kiến trúc

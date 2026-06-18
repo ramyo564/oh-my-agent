@@ -209,7 +209,7 @@ Ou utilise les slash commands pour des workflows structurés :
 
 ### Modèles par agent
 
-Chaque agent peut cibler son propre modèle et son `effort` via `.agents/oma-config.yaml`. Runtime profiles prêts à l'emploi : `antigravity`, `claude`, `codex`, `cursor`, `grok`, `mixed`, `qwen`. Vérifiez la matrice d'auth résolue avec `oma doctor --profile`. Guide complet : [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
+Chaque agent peut cibler son propre modèle et son `effort` via `.agents/oma-config.yaml`. Runtime profiles prêts à l'emploi : `antigravity`, `claude`, `codex`, `cursor`, `kiro`, `mixed`, `qwen`. Vérifiez la matrice d'auth résolue avec `oma doctor --profile`. Guide complet : [web/docs/guide/per-agent-models.md](../web/docs/guide/per-agent-models.md).
 
 ## Pourquoi oh-my-agent ?
 
@@ -224,7 +224,7 @@ Chaque agent peut cibler son propre modèle et son `effort` via `.agents/oma-con
   - workflow `ralph` — un JUDGE indépendant re-vérifie chaque criterion à chaque itération pour détecter les régressions silencieuses ; cache pour les tests >30s
   - Exploration Loop — après 2 retries, `orchestrate` spawn des variantes d'hypothèse en parallèle et conserve la meilleure note
   - Auto-routing monorepo — `detectWorkspace` lit pnpm / nx / turbo / lerna et route chaque agent vers son workspace
-- **Multi-vendor** : mélange Claude, Codex, Cursor et Qwen par type d'agent
+- **Multi-vendor** : mélange Antigravity, Claude, Codex, Cursor, Kiro et Qwen par type d'agent
 - **Observable** : dashboards terminal et web pour le monitoring en temps réel
 
 ## Architecture

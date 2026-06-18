@@ -217,7 +217,7 @@ Set `model_preset` in `.agents/oma-config.yaml` to choose which AI models each a
 
 ```yaml
 language: en
-model_preset: mixed   # antigravity | claude | codex | cursor | grok | mixed | qwen
+model_preset: mixed   # antigravity | claude | codex | cursor | kiro | mixed | qwen
 
 # Optional per-agent overrides
 agents:
@@ -240,7 +240,7 @@ agents:
   - `ralph` workflow — independent JUDGE re-verifies every criterion each iteration to catch silent regressions; heavy-test caching for >30s suites
   - Exploration Loop — after 2 retries, `orchestrate` spawns hypothesis variants in parallel and keeps the highest-scoring result
   - Monorepo auto-routing — `detectWorkspace` reads pnpm / nx / turbo / lerna and routes each agent to its workspace
-- **Multi-vendor** — Mix Claude, Codex, Cursor, and Qwen per agent type
+- **Multi-vendor** — Mix Antigravity, Claude, Codex, Cursor, Kiro, and Qwen per agent type
 - **Observable** — Terminal and web dashboards for real-time monitoring
 
 ## Architecture
