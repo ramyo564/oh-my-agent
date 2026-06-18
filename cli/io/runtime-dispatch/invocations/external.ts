@@ -4,15 +4,39 @@ import {
 } from "../../../platform/agent-config.js";
 import type { Invocation } from "../types.js";
 
+export interface ExternalInvocationOptions {
+  /** When true, constrains the spawned agent to non-destructive tools.
+   * Suppresses `auto_approve_flag` and appends the vendor's `read_only_flag`.
+   * Emits a console.warn when the vendor has no `read_only_flag` defined. */
+  readOnly?: boolean;
+}
+
+/**
+ * A vendor-specific external-invocation builder. All builders share one
+ * signature (mirroring buildExternalInvocation's own) so they can be routed
+ * through EXTERNAL_DISPATCH; each ignores the arguments it does not need.
+ */
+type ExternalInvocationBuilder = (
+  vendor: string,
+  vendorConfig: VendorConfig,
+  promptFlag: string | null,
+  promptContent: string,
+  agentId: string | undefined,
+  options: ExternalInvocationOptions,
+) => Invocation;
+
 /**
  * Cursor headless prompt with a plain trailing prompt — used by the external-invocation builder
  * (no @{agentId} preamble).
  */
-function buildExternalCursorInvocation(
-  vendorConfig: VendorConfig,
-  promptContent: string,
-  options: ExternalInvocationOptions = {},
-): Invocation {
+const buildExternalCursorInvocation: ExternalInvocationBuilder = (
+  _vendor,
+  vendorConfig,
+  _promptFlag,
+  promptContent,
+  _agentId,
+  options,
+) => {
   const { readOnly = false } = options;
   const command = vendorConfig.command || "cursor";
   const args: string[] = ["agent", "-p"];
@@ -47,14 +71,221 @@ function buildExternalCursorInvocation(
   args.push(promptContent);
 
   return { command, args, env: { ...process.env } };
-}
+};
 
-export interface ExternalInvocationOptions {
-  /** When true, constrains the spawned agent to non-destructive tools.
-   * Suppresses `auto_approve_flag` and appends the vendor's `read_only_flag`.
-   * Emits a console.warn when the vendor has no `read_only_flag` defined. */
-  readOnly?: boolean;
-}
+/** Kiro: `kiro-cli chat --no-interactive --trust-all-tools [--agent …] [--model …] "<prompt>"`. */
+const buildExternalKiroInvocation: ExternalInvocationBuilder = (
+  vendor,
+  vendorConfig,
+  _promptFlag,
+  promptContent,
+  agentId,
+  options,
+) => {
+  const { readOnly = false } = options;
+  const command = vendorConfig.command || "kiro-cli";
+  const args: string[] = ["chat", "--no-interactive"];
+
+  if (!readOnly) {
+    if (vendorConfig.auto_approve_flag) {
+      args.push(vendorConfig.auto_approve_flag);
+    } else {
+      args.push("--trust-all-tools");
+    }
+  } else if (vendorConfig.read_only_flag) {
+    args.push(...splitArgs(vendorConfig.read_only_flag));
+  } else {
+    console.warn(
+      `[agent-spawn] read-only mode requested but vendor '${vendor}' has no read_only_flag defined; spawning without auto-approve (permissive flags suppressed)`,
+    );
+  }
+
+  if (agentId) {
+    args.push("--agent", agentId);
+  }
+
+  if (vendorConfig.model_flag && vendorConfig.default_model) {
+    args.push(vendorConfig.model_flag, vendorConfig.default_model);
+  }
+
+  args.push(promptContent);
+
+  return { command, args, env: { ...process.env } };
+};
+
+/** Grok: supports `grok --yolo -p "prompt"` for headless execution. */
+const buildExternalGrokInvocation: ExternalInvocationBuilder = (
+  vendor,
+  vendorConfig,
+  _promptFlag,
+  promptContent,
+  _agentId,
+  options,
+) => {
+  const { readOnly = false } = options;
+  const command = vendorConfig.command || "grok";
+  const args: string[] = [];
+
+  if (!readOnly) {
+    if (vendorConfig.auto_approve_flag) {
+      args.push(vendorConfig.auto_approve_flag);
+    } else {
+      args.push("--yolo");
+    }
+  } else if (vendorConfig.read_only_flag) {
+    args.push(...splitArgs(vendorConfig.read_only_flag));
+  } else {
+    console.warn(
+      `[agent-spawn] read-only mode requested but vendor '${vendor}' has no read_only_flag defined; spawning without auto-approve (permissive flags suppressed)`,
+    );
+  }
+
+  if (vendorConfig.model_flag && vendorConfig.default_model) {
+    args.push(vendorConfig.model_flag, vendorConfig.default_model);
+  }
+
+  // Grok uses -p for the prompt (positional after flags in practice).
+  args.push("-p", promptContent);
+
+  return { command, args, env: { ...process.env } };
+};
+
+/**
+ * Kimi Code CLI: `kimi -p "<prompt>"` runs a single prompt non-interactively
+ * and streams stdout. In `-p` mode Kimi uses the `auto` permission policy by
+ * default — tool calls are auto-approved — and `--yolo`/`--auto` are MUTUALLY
+ * EXCLUSIVE with `--prompt`, so we must NOT append them. Kimi exposes no
+ * headless read-only sandbox flag, so read-only mode can only warn.
+ */
+const buildExternalKimiInvocation: ExternalInvocationBuilder = (
+  vendor,
+  vendorConfig,
+  _promptFlag,
+  promptContent,
+  _agentId,
+  options,
+) => {
+  const { readOnly = false } = options;
+  const command = vendorConfig.command || "kimi";
+  const args: string[] = [];
+
+  if (vendorConfig.model_flag && vendorConfig.default_model) {
+    args.push(vendorConfig.model_flag, vendorConfig.default_model);
+  }
+
+  if (readOnly) {
+    if (vendorConfig.read_only_flag) {
+      args.push(...splitArgs(vendorConfig.read_only_flag));
+    } else {
+      console.warn(
+        `[agent-spawn] read-only mode requested but vendor '${vendor}' has no read_only_flag defined; spawning without auto-approve (permissive flags suppressed)`,
+      );
+    }
+  }
+
+  // `-p`/`--prompt` is Kimi's non-interactive prompt flag.
+  args.push("-p", promptContent);
+
+  return { command, args, env: { ...process.env } };
+};
+
+/**
+ * pi (Earendil): `pi -p [--exclude-tools …] [--model …] "<prompt>"`. pi has no
+ * permission sandbox or auto-approve flag — tools run without prompting — so
+ * read-only is enforced by excluding the mutating tools. The model/thinking
+ * flags are appended after the positional prompt by applyResolvedPlan when a
+ * per-agent plan is active; pi tolerates options after positionals.
+ */
+const buildExternalPiInvocation: ExternalInvocationBuilder = (
+  _vendor,
+  vendorConfig,
+  _promptFlag,
+  promptContent,
+  _agentId,
+  options,
+) => {
+  const { readOnly = false } = options;
+  const command = vendorConfig.command || "pi";
+  const args: string[] = ["-p"];
+
+  if (readOnly) {
+    if (vendorConfig.read_only_flag) {
+      args.push(...splitArgs(vendorConfig.read_only_flag));
+    } else {
+      args.push("--exclude-tools", "edit,write");
+    }
+  }
+
+  // Fallback model path (no resolved plan): emit the vendor default model.
+  if (vendorConfig.model_flag && vendorConfig.default_model) {
+    args.push(vendorConfig.model_flag, vendorConfig.default_model);
+  }
+
+  args.push(promptContent);
+
+  return { command, args, env: { ...process.env } };
+};
+
+/**
+ * opencode: `opencode run -m <model> [--agent <agentId>] --dir <cwd>
+ *            [--dangerously-skip-permissions] "<prompt>"`.
+ * CRITICAL: `-p` in opencode means `--password`, NOT prompt. The prompt MUST
+ * be the trailing positional arg (matches the [message..] positional in
+ * `opencode run --help`). Never precede it with a prompt flag.
+ */
+const buildExternalOpencodeInvocation: ExternalInvocationBuilder = (
+  vendor,
+  vendorConfig,
+  _promptFlag,
+  promptContent,
+  agentId,
+  options,
+) => {
+  const { readOnly = false } = options;
+  const command = vendorConfig.command || "opencode";
+  const args: string[] = ["run"];
+
+  const modelFlag = vendorConfig.model_flag || "-m";
+  const modelValue = vendorConfig.default_model;
+  if (modelValue) {
+    args.push(modelFlag, modelValue);
+  }
+
+  if (agentId) {
+    args.push("--agent", agentId);
+  }
+
+  args.push("--dir", process.cwd());
+
+  if (!readOnly) {
+    args.push("--dangerously-skip-permissions");
+  } else if (vendorConfig.read_only_flag) {
+    args.push(...splitArgs(vendorConfig.read_only_flag));
+  } else {
+    console.warn(
+      `[agent-spawn] read-only mode requested but vendor '${vendor}' has no read_only_flag defined; spawning without auto-approve (permissive flags suppressed)`,
+    );
+  }
+
+  // Prompt is the last positional arg — never preceded by a -p flag.
+  args.push(promptContent);
+
+  return { command, args, env: { ...process.env } };
+};
+
+/**
+ * Vendors whose external CLI argv differs from the generic shape get a
+ * dedicated builder here. Vendors absent from this table fall through to the
+ * generic builder in buildExternalInvocation (mirrors NATIVE_DISPATCH).
+ */
+const EXTERNAL_DISPATCH: Record<string, ExternalInvocationBuilder> = {
+  cursor: buildExternalCursorInvocation,
+  kiro: buildExternalKiroInvocation,
+  grok: buildExternalGrokInvocation,
+  kimi: buildExternalKimiInvocation,
+  pi: buildExternalPiInvocation,
+  opencode: buildExternalOpencodeInvocation,
+};
 
 export function buildExternalInvocation(
   vendor: string,
@@ -64,167 +295,19 @@ export function buildExternalInvocation(
   agentId?: string,
   options: ExternalInvocationOptions = {},
 ): Invocation {
+  const specialized = EXTERNAL_DISPATCH[vendor];
+  if (specialized) {
+    return specialized(
+      vendor,
+      vendorConfig,
+      promptFlag,
+      promptContent,
+      agentId,
+      options,
+    );
+  }
+
   const { readOnly = false } = options;
-
-  // Cursor Agent: `-p`/`--print` is a boolean flag; prompt must be a trailing positional argv.
-  // The generic branch always pairs `promptFlag` with prompt as two args, which is wrong here.
-  if (vendor === "cursor") {
-    return buildExternalCursorInvocation(vendorConfig, promptContent, options);
-  }
-
-  // Kiro: `kiro-cli chat --no-interactive --trust-all-tools [--agent …] [--model …] "<prompt>"`.
-  if (vendor === "kiro") {
-    const command = vendorConfig.command || "kiro-cli";
-    const args: string[] = ["chat", "--no-interactive"];
-
-    if (!readOnly) {
-      if (vendorConfig.auto_approve_flag) {
-        args.push(vendorConfig.auto_approve_flag);
-      } else {
-        args.push("--trust-all-tools");
-      }
-    } else if (vendorConfig.read_only_flag) {
-      args.push(...splitArgs(vendorConfig.read_only_flag));
-    } else {
-      console.warn(
-        `[agent-spawn] read-only mode requested but vendor '${vendor}' has no read_only_flag defined; spawning without auto-approve (permissive flags suppressed)`,
-      );
-    }
-
-    if (agentId) {
-      args.push("--agent", agentId);
-    }
-
-    if (vendorConfig.model_flag && vendorConfig.default_model) {
-      args.push(vendorConfig.model_flag, vendorConfig.default_model);
-    }
-
-    args.push(promptContent);
-
-    return { command, args, env: { ...process.env } };
-  }
-
-  // Grok: supports `grok --yolo -p "prompt"` for headless execution.
-  if (vendor === "grok") {
-    const command = vendorConfig.command || "grok";
-    const args: string[] = [];
-
-    if (!readOnly) {
-      if (vendorConfig.auto_approve_flag) {
-        args.push(vendorConfig.auto_approve_flag);
-      } else {
-        args.push("--yolo");
-      }
-    } else if (vendorConfig.read_only_flag) {
-      args.push(...splitArgs(vendorConfig.read_only_flag));
-    } else {
-      console.warn(
-        `[agent-spawn] read-only mode requested but vendor '${vendor}' has no read_only_flag defined; spawning without auto-approve (permissive flags suppressed)`,
-      );
-    }
-
-    if (vendorConfig.model_flag && vendorConfig.default_model) {
-      args.push(vendorConfig.model_flag, vendorConfig.default_model);
-    }
-
-    // Grok uses -p for the prompt (positional after flags in practice).
-    args.push("-p", promptContent);
-
-    return { command, args, env: { ...process.env } };
-  }
-
-  // Kimi Code CLI: `kimi -p "<prompt>"` runs a single prompt non-interactively
-  // and streams stdout. In `-p` mode Kimi uses the `auto` permission policy by
-  // default — tool calls are auto-approved — and `--yolo`/`--auto` are MUTUALLY
-  // EXCLUSIVE with `--prompt`, so we must NOT append them. Kimi exposes no
-  // headless read-only sandbox flag, so read-only mode can only warn.
-  if (vendor === "kimi") {
-    const command = vendorConfig.command || "kimi";
-    const args: string[] = [];
-
-    if (vendorConfig.model_flag && vendorConfig.default_model) {
-      args.push(vendorConfig.model_flag, vendorConfig.default_model);
-    }
-
-    if (readOnly) {
-      if (vendorConfig.read_only_flag) {
-        args.push(...splitArgs(vendorConfig.read_only_flag));
-      } else {
-        console.warn(
-          `[agent-spawn] read-only mode requested but vendor '${vendor}' has no read_only_flag defined; spawning without auto-approve (permissive flags suppressed)`,
-        );
-      }
-    }
-
-    // `-p`/`--prompt` is Kimi's non-interactive prompt flag.
-    args.push("-p", promptContent);
-
-    return { command, args, env: { ...process.env } };
-  }
-
-  // pi (Earendil): `pi -p [--exclude-tools …] [--model …] "<prompt>"`. pi has no
-  // permission sandbox or auto-approve flag — tools run without prompting — so
-  // read-only is enforced by excluding the mutating tools. The model/thinking
-  // flags are appended after the positional prompt by applyResolvedPlan when a
-  // per-agent plan is active; pi tolerates options after positionals.
-  if (vendor === "pi") {
-    const command = vendorConfig.command || "pi";
-    const args: string[] = ["-p"];
-
-    if (readOnly) {
-      if (vendorConfig.read_only_flag) {
-        args.push(...splitArgs(vendorConfig.read_only_flag));
-      } else {
-        args.push("--exclude-tools", "edit,write");
-      }
-    }
-
-    // Fallback model path (no resolved plan): emit the vendor default model.
-    if (vendorConfig.model_flag && vendorConfig.default_model) {
-      args.push(vendorConfig.model_flag, vendorConfig.default_model);
-    }
-
-    args.push(promptContent);
-
-    return { command, args, env: { ...process.env } };
-  }
-
-  // opencode: `opencode run -m <model> [--agent <agentId>] --dir <cwd>
-  //            [--dangerously-skip-permissions] "<prompt>"`.
-  // CRITICAL: `-p` in opencode means `--password`, NOT prompt. The prompt MUST
-  // be the trailing positional arg (matches the [message..] positional in
-  // `opencode run --help`). Never precede it with a prompt flag.
-  if (vendor === "opencode") {
-    const command = vendorConfig.command || "opencode";
-    const args: string[] = ["run"];
-
-    const modelFlag = vendorConfig.model_flag || "-m";
-    const modelValue = vendorConfig.default_model;
-    if (modelValue) {
-      args.push(modelFlag, modelValue);
-    }
-
-    if (agentId) {
-      args.push("--agent", agentId);
-    }
-
-    args.push("--dir", process.cwd());
-
-    if (!readOnly) {
-      args.push("--dangerously-skip-permissions");
-    } else if (vendorConfig.read_only_flag) {
-      args.push(...splitArgs(vendorConfig.read_only_flag));
-    } else {
-      console.warn(
-        `[agent-spawn] read-only mode requested but vendor '${vendor}' has no read_only_flag defined; spawning without auto-approve (permissive flags suppressed)`,
-      );
-    }
-
-    // Prompt is the last positional arg — never preceded by a -p flag.
-    args.push(promptContent);
-
-    return { command, args, env: { ...process.env } };
-  }
 
   // Vendors whose CLI binary name differs from the vendor identifier.
   const binaryByVendor: Record<string, string> = {
