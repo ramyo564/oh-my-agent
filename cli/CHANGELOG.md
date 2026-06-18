@@ -1,5 +1,22 @@
 # Changelog
 
+## [9.10.0](https://github.com/first-fluke/oh-my-agent/compare/cli-v9.9.1...cli-v9.10.0) (2026-06-18)
+
+
+### Features
+
+* **sns:** add TabNews (pt-BR) publishing target ([298a42e](https://github.com/first-fluke/oh-my-agent/commit/298a42e6ab8c25518e814e66287d0dd6b65eee46))
+
+
+### Refactoring
+
+* **runtime-dispatch:** collapse native if-chain into dispatch table ([b3ac57b](https://github.com/first-fluke/oh-my-agent/commit/b3ac57bd5d069c9171a9b36ac84a113fad9a9fba))
+
+
+### Documentation
+
+* list supported AI IDEs A-Z and unify Grok Build label ([ac6d39e](https://github.com/first-fluke/oh-my-agent/commit/ac6d39ecd30216066b8b4eb3feb4569f45de1277))
+
 ## [9.9.1](https://github.com/first-fluke/oh-my-agent/compare/cli-v9.9.0...cli-v9.9.1) (2026-06-17)
 
 
