@@ -71,7 +71,7 @@ If you selected a preset that includes the backend skill, you are asked to choos
 
 ### 6. Configure IDE symlinks
 
-The installer always creates Claude Code symlinks (`.claude/skills/`). It also generates vendor-native agent files and hooks for Antigravity, Claude, Codex, and Qwen, and if a `.github/` directory exists, it creates GitHub Copilot symlinks automatically. Otherwise, it asks:
+The installer always creates Claude Code symlinks (`.claude/skills/`). It also generates vendor-native agent files and hooks for Antigravity, Claude, Codex, and Qwen, and if a `.github/` directory exists, it creates GitHub Copilot symlinks automatically. When you select **ZCode**, it exposes workflows as slash-commands via `.zcode/commands/*.md` symlinks (workflows only — no agent files or hooks). Otherwise, it asks:
 
 ```
 Also create symlinks for GitHub Copilot? (.github/skills/)
@@ -268,6 +268,8 @@ your-project/
     agents/                         # -> .agents/agents/*
   .github/                          # GitHub Copilot — symlinks only (optional)
     skills/                         # -> .agents/skills/*
+  .zcode/                           # ZCode — workflow commands only (optional)
+    commands/                       # -> .agents/workflows/*
   .serena/                          # MCP memory storage
     memories/                       # Runtime memory files
     metrics.json                    # Productivity metrics
