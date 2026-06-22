@@ -51,6 +51,28 @@ describe("excluded patterns", () => {
     expect(isExcluded(".agents/state/skill-sessions.json")).toBe(true);
   });
 
+  it("should exclude safe-write backups written at run time", () => {
+    expect(
+      isExcluded(
+        ".agents/backup/safe-write/.agents__hooks.json.backup-1781793010235-9631",
+      ),
+    ).toBe(true);
+    expect(isExcluded(".agents/backup/safe-write/.claude__settings.json")).toBe(
+      true,
+    );
+  });
+
+  it("should exclude vendored lockfiles but keep the tracked package.json", () => {
+    expect(
+      isExcluded(
+        ".agents/skills/oma-video/resources/remotion/package-lock.json",
+      ),
+    ).toBe(true);
+    expect(
+      isExcluded(".agents/skills/oma-video/resources/remotion/package.json"),
+    ).toBe(false);
+  });
+
   it("should exclude the install-generated hooks.json but not hook sources", () => {
     expect(isExcluded(".agents/hooks.json")).toBe(true);
     expect(isExcluded(".agents/hooks/core/keyword-detector.ts")).toBe(false);
